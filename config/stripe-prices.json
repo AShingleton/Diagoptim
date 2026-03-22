@@ -1,0 +1,153 @@
+{
+  "results": [
+    {
+      "productName": "DiagOptim Starter",
+      "productId": "prod_UCAzg1rZTR13Bv",
+      "priceId": "price_1TDmdxHEFa9tjElA1SHQbT5T",
+      "amount": 4900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_STARTER_MONTHLY"
+    },
+    {
+      "productName": "DiagOptim Starter",
+      "productId": "prod_UCAzg1rZTR13Bv",
+      "priceId": "price_1TDmdxHEFa9tjElAMH5FDsmQ",
+      "amount": 46800,
+      "type": "recurring",
+      "interval": "year",
+      "envKey": "STRIPE_PRICE_STARTER_YEARLY"
+    },
+    {
+      "productName": "DiagOptim Pro",
+      "productId": "prod_UCAzjFbgfK5JfR",
+      "priceId": "price_1TDmdxHEFa9tjElAXm8N8bz6",
+      "amount": 14900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_PRO_MONTHLY"
+    },
+    {
+      "productName": "DiagOptim Pro",
+      "productId": "prod_UCAzjFbgfK5JfR",
+      "priceId": "price_1TDmdyHEFa9tjElAHNxOkmww",
+      "amount": 142800,
+      "type": "recurring",
+      "interval": "year",
+      "envKey": "STRIPE_PRICE_PRO_YEARLY"
+    },
+    {
+      "productName": "DiagOptim Expert",
+      "productId": "prod_UCAzSuugkO5QHQ",
+      "priceId": "price_1TDmdyHEFa9tjElAWhV7XJCC",
+      "amount": 29900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_EXPERT_MONTHLY"
+    },
+    {
+      "productName": "DiagOptim Expert",
+      "productId": "prod_UCAzSuugkO5QHQ",
+      "priceId": "price_1TDmdyHEFa9tjElAQeHUAkt2",
+      "amount": 286800,
+      "type": "recurring",
+      "interval": "year",
+      "envKey": "STRIPE_PRICE_EXPERT_YEARLY"
+    },
+    {
+      "productName": "Consultant Solo",
+      "productId": "prod_UCAzA2EHaaPmPb",
+      "priceId": "price_1TDmdzHEFa9tjElA8zc9RGDX",
+      "amount": 19900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_CONSULTANT_SOLO_MONTHLY"
+    },
+    {
+      "productName": "Consultant Solo",
+      "productId": "prod_UCAzA2EHaaPmPb",
+      "priceId": "price_1TDmdzHEFa9tjElAPxpbGqYj",
+      "amount": 190800,
+      "type": "recurring",
+      "interval": "year",
+      "envKey": "STRIPE_PRICE_CONSULTANT_SOLO_YEARLY"
+    },
+    {
+      "productName": "Cabinet",
+      "productId": "prod_UCB0YLNdqe4gEX",
+      "priceId": "price_1TDme0HEFa9tjElAU4ox4mxd",
+      "amount": 49900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_CONSULTANT_CABINET_MONTHLY"
+    },
+    {
+      "productName": "Cabinet",
+      "productId": "prod_UCB0YLNdqe4gEX",
+      "priceId": "price_1TDme0HEFa9tjElA73CVLGve",
+      "amount": 478800,
+      "type": "recurring",
+      "interval": "year",
+      "envKey": "STRIPE_PRICE_CONSULTANT_CABINET_YEARLY"
+    },
+    {
+      "productName": "Pack Coup de Pouce",
+      "productId": "prod_UCB02wkV6ClOKK",
+      "priceId": "price_1TDme1HEFa9tjElAaiq84kwl",
+      "amount": 7900,
+      "type": "one_time",
+      "envKey": "STRIPE_PRICE_PACK_COUP_DE_POUCE"
+    },
+    {
+      "productName": "Pack Acceleration",
+      "productId": "prod_UCB01DEUaIm2LE",
+      "priceId": "price_1TDme1HEFa9tjElApIKTpYLD",
+      "amount": 24900,
+      "type": "one_time",
+      "envKey": "STRIPE_PRICE_PACK_ACCELERATION"
+    },
+    {
+      "productName": "Pack Transformation",
+      "productId": "prod_UCB0xKbiBpUYOR",
+      "priceId": "price_1TDme2HEFa9tjElApBj97dHZ",
+      "amount": 69900,
+      "type": "one_time",
+      "envKey": "STRIPE_PRICE_PACK_TRANSFORMATION"
+    },
+    {
+      "productName": "Support Essentiel",
+      "productId": "prod_UCB0PEWv0AfZl2",
+      "priceId": "price_1TDme2HEFa9tjElAZvBUZzTH",
+      "amount": 9900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_SUPPORT_ESSENTIEL_MONTHLY"
+    },
+    {
+      "productName": "Support Premium",
+      "productId": "prod_UCB055FR10Utod",
+      "priceId": "price_1TDme3HEFa9tjElAHcTmg7Cy",
+      "amount": 24900,
+      "type": "recurring",
+      "interval": "month",
+      "envKey": "STRIPE_PRICE_SUPPORT_PREMIUM_MONTHLY"
+    }
+  ],
+  "envMapping": {
+    "STRIPE_PRICE_STARTER_MONTHLY": "price_1TDmdxHEFa9tjElA1SHQbT5T",
+    "STRIPE_PRICE_STARTER_YEARLY": "price_1TDmdxHEFa9tjElAMH5FDsmQ",
+    "STRIPE_PRICE_PRO_MONTHLY": "price_1TDmdxHEFa9tjElAXm8N8bz6",
+    "STRIPE_PRICE_PRO_YEARLY": "price_1TDmdyHEFa9tjElAHNxOkmww",
+    "STRIPE_PRICE_EXPERT_MONTHLY": "price_1TDmdyHEFa9tjElAWhV7XJCC",
+    "STRIPE_PRICE_EXPERT_YEARLY": "price_1TDmdyHEFa9tjElAQeHUAkt2",
+    "STRIPE_PRICE_CONSULTANT_SOLO_MONTHLY": "price_1TDmdzHEFa9tjElA8zc9RGDX",
+    "STRIPE_PRICE_CONSULTANT_SOLO_YEARLY": "price_1TDmdzHEFa9tjElAPxpbGqYj",
+    "STRIPE_PRICE_CONSULTANT_CABINET_MONTHLY": "price_1TDme0HEFa9tjElAU4ox4mxd",
+    "STRIPE_PRICE_CONSULTANT_CABINET_YEARLY": "price_1TDme0HEFa9tjElA73CVLGve",
+    "STRIPE_PRICE_PACK_COUP_DE_POUCE": "price_1TDme1HEFa9tjElAaiq84kwl",
+    "STRIPE_PRICE_PACK_ACCELERATION": "price_1TDme1HEFa9tjElApIKTpYLD",
+    "STRIPE_PRICE_PACK_TRANSFORMATION": "price_1TDme2HEFa9tjElApBj97dHZ",
+    "STRIPE_PRICE_SUPPORT_ESSENTIEL_MONTHLY": "price_1TDme2HEFa9tjElAZvBUZzTH",
+    "STRIPE_PRICE_SUPPORT_PREMIUM_MONTHLY": "price_1TDme3HEFa9tjElAHcTmg7Cy"
+  }
+}

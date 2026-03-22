@@ -1,0 +1,966 @@
+// ============================================================================
+// DiagOptim - Prisma Schema
+// SaaS Diagnostic Tool for SMBs (Lean Management / Lean Six Sigma)
+// Database: PostgreSQL via Supabase
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  user
+  consultant
+  admin
+}
+
+enum Locale {
+  fr
+  en
+}
+
+enum Plan {
+  free
+  starter
+  pro
+  expert
+  consultant_solo
+  consultant_cabinet
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  canceled
+  trialing
+}
+
+enum DiagnosticType {
+  full
+  waste
+  strategy
+  quick
+}
+
+enum DiagnosticStatus {
+  in_progress
+  completed
+  archived
+}
+
+enum TargetType {
+  revenue_increase
+  cost_reduction
+}
+
+enum AutonomyLevel {
+  self
+  guided
+  accompanied
+}
+
+enum DiagnosticPhase {
+  framing
+  profile
+  documents
+  wastes
+  deepening
+  strategy
+  recommendations
+}
+
+enum InsightType {
+  strength
+  weakness
+  opportunity
+  quick_win
+}
+
+enum DocumentType {
+  invoice
+  quote
+  balance_sheet
+  insurance
+  brochure_company
+  brochure_client
+}
+
+enum ActionCategory {
+  quick_win
+  short_term
+  structural
+  transformation
+}
+
+enum EffortLevel {
+  low
+  medium
+  high
+}
+
+enum ActionStatus {
+  todo
+  in_progress
+  done
+  skipped
+}
+
+enum TrainingType {
+  theory_video
+  practice_video
+  memory_sheet
+  implementation_guide
+}
+
+enum TrainingStatus {
+  not_started
+  in_progress
+  completed
+}
+
+enum Methodology {
+  lean
+  six_sigma
+  strategy
+  general
+}
+
+enum ConsultantClientStatus {
+  active
+  archived
+}
+
+enum NotificationType {
+  diagnostic_reminder
+  action_due
+  milestone
+  training_new
+  rediagnostic
+}
+
+enum NotificationChannel {
+  email
+  push
+  in_app
+}
+
+enum SupportPackType {
+  coup_de_pouce
+  acceleration
+  transformation
+}
+
+enum SupportPackStatus {
+  purchased
+  partially_used
+  used
+  expired
+}
+
+enum SessionStatus {
+  scheduled
+  completed
+  canceled
+}
+
+enum AffiliateStatus {
+  active
+  paused
+}
+
+enum ReferralStatus {
+  signed_up
+  converted
+  churned
+}
+
+enum TeamRole {
+  owner
+  collaborator
+  observer
+}
+
+// ============================================================================
+// CORE MODELS
+// ============================================================================
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  name      String
+  role      Role     @default(user)
+  locale    Locale   @default(fr)
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  companies             Company[]
+  subscription          Subscription?
+  trainingProgress      UserTrainingProgress[]
+  whiteLabelConfig      WhiteLabelConfig?
+  consultantClients     ConsultantClient[]     @relation("ConsultantClients")
+  notifications         Notification[]
+  supportPacks          SupportPack[]
+  affiliate             Affiliate?
+  referralsReceived     Referral[]             @relation("ReferredUser")
+  teamMemberships       TeamMember[]
+  auditLogs             AuditLog[]
+  knowledgeBases        KnowledgeBase[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Company {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String   @map("user_id") @db.Uuid
+  name                String
+  siret               String
+  sector              String
+  subsector           String
+  productsDescription String   @map("products_description")
+  location            String
+  employeeCount       Int      @map("employee_count")
+  annualRevenue       Float    @map("annual_revenue")
+  clientCount         Int      @map("client_count")
+  competitors         String[]
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diagnostics       Diagnostic[]
+  documents         Document[]
+  consultantClients ConsultantClient[]
+  teamMembers       TeamMember[]
+
+  @@index([userId])
+  @@index([siret])
+  @@index([sector])
+  @@map("companies")
+}
+
+model Subscription {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String             @unique @map("user_id") @db.Uuid
+  plan                 Plan               @default(free)
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?            @map("stripe_subscription_id")
+  status               SubscriptionStatus @default(active)
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// ============================================================================
+// DIAGNOSTIC MODELS
+// ============================================================================
+
+model Diagnostic {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String          @map("company_id") @db.Uuid
+  type             DiagnosticType
+  status           DiagnosticStatus @default(in_progress)
+  targetAmount     Float           @map("target_amount")
+  targetType       TargetType      @map("target_type")
+  targetTimeMonths Int             @map("target_time_months")
+  autonomyLevel    AutonomyLevel   @map("autonomy_level")
+  globalScore      Float?          @map("global_score")
+  currentPhase     DiagnosticPhase @default(framing) @map("current_phase")
+  results          Json?
+  startedAt        DateTime        @default(now()) @map("started_at")
+  completedAt      DateTime?       @map("completed_at")
+
+  // Relations
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  answers           DiagnosticAnswer[]
+  insights          DiagnosticInsight[]
+  vsmMaps           VsmMap[]
+  ishikawaDiagrams  IshikawaDiagram[]
+  a3Reports         A3Report[]
+  swotAnalyses      SwotAnalysis[]
+  steepleAnalyses   SteepleAnalysis[]
+  porterAnalyses    PorterAnalysis[]
+  bcgMatrices       BcgMatrix[]
+  hoshinMatrices    HoshinMatrix[]
+  roadmap           Roadmap?
+  reportJobs        ReportJob[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([type])
+  @@index([currentPhase])
+  @@map("diagnostics")
+}
+
+model DiagnosticAnswer {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId String   @map("diagnostic_id") @db.Uuid
+  questionKey  String   @map("question_key")
+  questionText String   @map("question_text")
+  answer       Json
+  score        Float?
+  category     String
+  phase        String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@index([category])
+  @@index([phase])
+  @@map("diagnostic_answers")
+}
+
+model DiagnosticInsight {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId    String     @map("diagnostic_id") @db.Uuid
+  type            InsightType
+  title           String
+  description     String
+  estimatedImpact Float?     @map("estimated_impact")
+  priority        Int
+  category        String
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@index([type])
+  @@index([priority])
+  @@map("diagnostic_insights")
+}
+
+// ============================================================================
+// METHODOLOGICAL TOOLS
+// ============================================================================
+
+model VsmMap {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId String   @map("diagnostic_id") @db.Uuid
+  processName  String   @map("process_name")
+  steps        Json
+  bottlenecks  Json
+  currentState Json     @map("current_state")
+  futureState  Json     @map("future_state")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("vsm_maps")
+}
+
+model IshikawaDiagram {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId     String   @map("diagnostic_id") @db.Uuid
+  problem          String
+  causes           Json
+  rootCause        String   @map("root_cause")
+  prioritizedCauses Json    @map("prioritized_causes")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("ishikawa_diagrams")
+}
+
+model A3Report {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId       String   @map("diagnostic_id") @db.Uuid
+  background         String
+  problemStatement   String   @map("problem_statement")
+  goal               String
+  rootCauseAnalysis  String   @map("root_cause_analysis")
+  countermeasures    Json
+  implementationPlan Json     @map("implementation_plan")
+  followUp           Json     @map("follow_up")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("a3_reports")
+}
+
+model SwotAnalysis {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId    String   @map("diagnostic_id") @db.Uuid
+  strengths       Json
+  weaknesses      Json
+  opportunities   Json
+  threats         Json
+  towsStrategies  Json     @map("tows_strategies")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("swot_analyses")
+}
+
+model SteepleAnalysis {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId   String   @map("diagnostic_id") @db.Uuid
+  social         Json
+  technological  Json
+  economic       Json
+  environmental  Json
+  political      Json
+  legal          Json
+  ethical        Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("steeple_analyses")
+}
+
+model PorterAnalysis {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId  String   @map("diagnostic_id") @db.Uuid
+  supplierPower Float    @map("supplier_power")
+  buyerPower    Float    @map("buyer_power")
+  newEntrants   Float    @map("new_entrants")
+  substitutes   Float
+  rivalry       Float
+  details       Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("porter_analyses")
+}
+
+model BcgMatrix {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId String   @map("diagnostic_id") @db.Uuid
+  products     Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("bcg_matrices")
+}
+
+model HoshinMatrix {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId     String   @map("diagnostic_id") @db.Uuid
+  vision           String
+  objectives       Json
+  kpis             Json
+  responsibilities Json
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosticId])
+  @@map("hoshin_matrices")
+}
+
+// ============================================================================
+// JOB QUEUE (replaces BullMQ/Redis)
+// ============================================================================
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum JobType {
+  DOCUMENT_ANALYSIS
+  REPORT_GENERATION
+  TRAINING_GENERATION
+  EMBEDDING_GENERATION
+}
+
+model DocumentJob {
+  id          String    @id @default(cuid())
+  documentId  String    @map("document_id") @db.Uuid
+  type        JobType   @default(DOCUMENT_ANALYSIS)
+  status      JobStatus @default(PENDING)
+  priority    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  error       String?
+  result      Json?
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([status, priority, createdAt])
+  @@index([type, status])
+  @@map("document_jobs")
+}
+
+model ReportJob {
+  id           String    @id @default(cuid())
+  diagnosticId String    @map("diagnostic_id") @db.Uuid
+  format       String    @default("pdf")
+  status       JobStatus @default(PENDING)
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3) @map("max_attempts")
+  error        String?
+  resultUrl    String?   @map("result_url")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  completedAt  DateTime? @map("completed_at")
+
+  // Relations
+  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@map("report_jobs")
+}
+
+// ============================================================================
+// DOCUMENTS
+// ============================================================================
+
+model Document {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String       @map("company_id") @db.Uuid
+  type            DocumentType
+  filename        String
+  storagePath     String       @map("storage_path")
+  mimeType        String       @map("mime_type")
+  size            Int
+  extractedData   Json?        @map("extracted_data")
+  validatedByUser Boolean      @default(false) @map("validated_by_user")
+  uploadedAt      DateTime     @default(now()) @map("uploaded_at")
+
+  // Relations
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobs    DocumentJob[]
+
+  @@index([companyId])
+  @@index([type])
+  @@map("documents")
+}
+
+// ============================================================================
+// ROADMAP
+// ============================================================================
+
+model Roadmap {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diagnosticId         String   @unique @map("diagnostic_id") @db.Uuid
+  timelineMonths       Int      @map("timeline_months")
+  capacityHoursPerWeek Float    @map("capacity_hours_per_week")
+  hasDedicatedPerson   Boolean  @map("has_dedicated_person")
+  budget               Float?
+  generatedAt          DateTime @default(now()) @map("generated_at")
+
+  // Relations
+  diagnostic Diagnostic     @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  actions    RoadmapAction[]
+
+  @@index([diagnosticId])
+  @@map("roadmaps")
+}
+
+model RoadmapAction {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roadmapId        String         @map("roadmap_id") @db.Uuid
+  title            String
+  description      String
+  category         ActionCategory
+  estimatedGain    Float?         @map("estimated_gain")
+  effortLevel      EffortLevel    @map("effort_level")
+  durationWeeks    Int            @map("duration_weeks")
+  responsibleRole  String         @map("responsible_role")
+  status           ActionStatus   @default(todo)
+  dueDate          DateTime?      @map("due_date")
+  completedAt      DateTime?      @map("completed_at")
+  linkedWaste      String?        @map("linked_waste")
+  linkedTrainingId String?        @map("linked_training_id")
+  sortOrder        Int            @map("sort_order")
+
+  // Relations
+  roadmap Roadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  @@index([roadmapId])
+  @@index([status])
+  @@index([category])
+  @@index([sortOrder])
+  @@map("roadmap_actions")
+}
+
+// ============================================================================
+// TRAINING
+// ============================================================================
+
+model Training {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type            TrainingType
+  title           String
+  description     String
+  locale          Locale       @default(fr)
+  sector          String?
+  contentUrl      String       @map("content_url")
+  thumbnailUrl    String?      @map("thumbnail_url")
+  durationSeconds Int?         @map("duration_seconds")
+  methodology     Methodology
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  userProgress UserTrainingProgress[]
+
+  @@index([type])
+  @@index([locale])
+  @@index([methodology])
+  @@index([sector])
+  @@map("trainings")
+}
+
+model UserTrainingProgress {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  trainingId      String         @map("training_id") @db.Uuid
+  status          TrainingStatus @default(not_started)
+  progressPercent Float          @default(0) @map("progress_percent")
+  completedAt     DateTime?      @map("completed_at")
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trainingId])
+  @@index([userId])
+  @@index([trainingId])
+  @@index([status])
+  @@map("user_training_progress")
+}
+
+// ============================================================================
+// WHITE-LABEL
+// ============================================================================
+
+model WhiteLabelConfig {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  brandName      String   @map("brand_name")
+  logoUrl        String?  @map("logo_url")
+  primaryColor   String   @default("#2563EB") @map("primary_color")
+  secondaryColor String   @default("#1E40AF") @map("secondary_color")
+  customDomain   String?  @map("custom_domain")
+  contactEmail   String   @map("contact_email")
+  isActive       Boolean  @default(false) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([customDomain])
+  @@map("white_label_configs")
+}
+
+model ConsultantClient {
+  id           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultantId String                 @map("consultant_id") @db.Uuid
+  companyId    String                 @map("company_id") @db.Uuid
+  status       ConsultantClientStatus @default(active)
+  notes        String?
+  addedAt      DateTime               @default(now()) @map("added_at")
+
+  // Relations
+  consultant User    @relation("ConsultantClients", fields: [consultantId], references: [id], onDelete: Cascade)
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([consultantId])
+  @@index([companyId])
+  @@index([status])
+  @@map("consultant_clients")
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+model Notification {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String              @map("user_id") @db.Uuid
+  type        NotificationType
+  title       String
+  body        String
+  isRead      Boolean             @default(false) @map("is_read")
+  scheduledAt DateTime?           @map("scheduled_at")
+  sentAt      DateTime?           @map("sent_at")
+  channel     NotificationChannel @default(in_app)
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([channel])
+  @@index([scheduledAt])
+  @@map("notifications")
+}
+
+// ============================================================================
+// PAYMENT - SUPPORT PACKS
+// ============================================================================
+
+model SupportPack {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String            @map("user_id") @db.Uuid
+  type            SupportPackType
+  status          SupportPackStatus @default(purchased)
+  hoursTotal      Float             @map("hours_total")
+  hoursUsed       Float             @default(0) @map("hours_used")
+  purchasedAt     DateTime          @default(now()) @map("purchased_at")
+  expiresAt       DateTime          @map("expires_at")
+  stripePaymentId String?           @map("stripe_payment_id")
+
+  // Relations
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions SupportSession[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("support_packs")
+}
+
+model SupportSession {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  packId          String        @map("pack_id") @db.Uuid
+  scheduledDate   DateTime      @map("scheduled_date")
+  durationMinutes Int           @map("duration_minutes")
+  notes           String?
+  consultantNotes String?       @map("consultant_notes")
+  status          SessionStatus @default(scheduled)
+
+  // Relations
+  pack SupportPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@index([packId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("support_sessions")
+}
+
+// ============================================================================
+// AFFILIATION
+// ============================================================================
+
+model Affiliate {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String          @unique @map("user_id") @db.Uuid
+  code            String          @unique
+  commissionRate  Float           @default(0.2) @map("commission_rate")
+  stripeConnectId String?         @map("stripe_connect_id")
+  totalEarned     Float           @default(0) @map("total_earned")
+  status          AffiliateStatus @default(active)
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals Referral[]
+
+  @@index([code])
+  @@index([status])
+  @@map("affiliates")
+}
+
+model Referral {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  affiliateId    String         @map("affiliate_id") @db.Uuid
+  referredUserId String         @map("referred_user_id") @db.Uuid
+  status         ReferralStatus @default(signed_up)
+  convertedAt    DateTime?      @map("converted_at")
+  commissionPaid Float          @default(0) @map("commission_paid")
+
+  // Relations
+  affiliate    Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  referredUser User      @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId])
+  @@index([referredUserId])
+  @@index([status])
+  @@map("referrals")
+}
+
+// ============================================================================
+// COLLABORATION
+// ============================================================================
+
+model TeamMember {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  role       TeamRole
+  invitedAt  DateTime  @default(now()) @map("invited_at")
+  acceptedAt DateTime? @map("accepted_at")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+// ============================================================================
+// AUDIT
+// ============================================================================
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// RAG : BASE DE CONNAISSANCES
+// ============================================================================
+
+enum KnowledgeBaseType {
+  METHODOLOGY
+  TEMPLATE
+  GUIDE
+  FORMATION
+  CASE_STUDY
+  BENCHMARK
+  USER_CONTENT
+  CONSULTANT_CONTENT
+}
+
+enum DocumentSourceType {
+  PDF
+  DOCX
+  TXT
+  MARKDOWN
+  HTML
+  CSV
+  URL
+  MANUAL
+}
+
+enum KnowledgeDocStatus {
+  PENDING
+  EXTRACTING
+  CHUNKING
+  EMBEDDING
+  READY
+  ERROR
+}
+
+model KnowledgeBase {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  type        KnowledgeBaseType
+  isPublic    Boolean           @default(false) @map("is_public")
+  ownerId     String?           @map("owner_id") @db.Uuid
+  owner       User?             @relation(fields: [ownerId], references: [id])
+  documents   KnowledgeDocument[]
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([type, isPublic])
+  @@index([ownerId])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id               String             @id @default(cuid())
+  knowledgeBaseId  String             @map("knowledge_base_id")
+  knowledgeBase    KnowledgeBase      @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  sourceType       DocumentSourceType @map("source_type")
+  sourceUrl        String?            @map("source_url")
+  originalFilename String?            @map("original_filename")
+  mimeType         String?            @map("mime_type")
+  language         String             @default("fr")
+  category         String?
+  subcategory      String?
+  tags             String[]
+  metadata         Json?
+  rawText          String?            @db.Text @map("raw_text")
+  status           KnowledgeDocStatus @default(PENDING)
+  chunks           KnowledgeChunk[]
+  totalChunks      Int                @default(0) @map("total_chunks")
+  totalTokens      Int                @default(0) @map("total_tokens")
+  processingError  String?            @map("processing_error")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@index([knowledgeBaseId, status])
+  @@index([category, subcategory])
+  @@index([language])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id         String            @id @default(cuid())
+  documentId String            @map("document_id")
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int               @map("chunk_index")
+  content    String            @db.Text
+  tokenCount Int               @map("token_count")
+  metadata   Json?
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  @@index([documentId, chunkIndex])
+  @@map("knowledge_chunks")
+}

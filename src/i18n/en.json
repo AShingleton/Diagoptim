@@ -1,0 +1,404 @@
+{
+  "app": {
+    "name": "DiagOptim",
+    "tagline": "Smart Business Diagnostic",
+    "description": "Optimize your business with Lean Management"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "diagnostic": "Diagnostic",
+    "roadmap": "Roadmap",
+    "tools": "Tools",
+    "training": "Training",
+    "documents": "Documents",
+    "reports": "Reports",
+    "settings": "Settings",
+    "support": "Support",
+    "newDiagnostic": "New Diagnostic",
+    "profile": "Profile",
+    "billing": "Billing",
+    "team": "Team",
+    "notifications": "Notifications",
+    "logout": "Sign out",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "login": "Sign in",
+    "register": "Sign up",
+    "collapse": "Collapse"
+  },
+  "footer": {
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "about": "About",
+    "blog": "Blog",
+    "careers": "Careers",
+    "contact": "Contact",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "rights": "All rights reserved"
+  },
+  "landing": {
+    "hero": {
+      "title": "Diagnose and optimize your business",
+      "titleHighlight": "in minutes",
+      "subtitle": "An interactive diagnostic based on Lean Management that identifies waste, generates a personalized action plan, and guides you toward operational excellence.",
+      "cta": "Free Diagnostic",
+      "ctaSecondary": "Discover the platform",
+      "stats": {
+        "companies": "companies diagnosed",
+        "savings": "in savings identified",
+        "satisfaction": "satisfaction rate"
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "subtitle": "A simple 3-step process to transform your business",
+      "step1": {
+        "title": "Answer the diagnostic",
+        "description": "A smart conversational questionnaire that adapts to your industry and company size."
+      },
+      "step2": {
+        "title": "Get your analysis",
+        "description": "A detailed report with your score, the 8 wastes identified, and concrete recommendations."
+      },
+      "step3": {
+        "title": "Take action",
+        "description": "A prioritized roadmap with estimated gains and Lean tools to support you."
+      }
+    },
+    "features": {
+      "title": "Everything you need",
+      "subtitle": "A complete platform to drive continuous improvement in your business",
+      "diagnostic": {
+        "title": "Interactive Diagnostic",
+        "description": "Conversational questionnaire based on the 8 Lean Management wastes"
+      },
+      "roadmap": {
+        "title": "Roadmap",
+        "description": "Prioritized action plan with gain estimates and progress tracking"
+      },
+      "tools": {
+        "title": "Lean Tools",
+        "description": "VSM, Ishikawa, A3, SWOT, DMAIC and more, fully integrated"
+      },
+      "documents": {
+        "title": "Document Analysis",
+        "description": "Upload your documents and let AI extract key data"
+      },
+      "training": {
+        "title": "Training",
+        "description": "Videos, memory sheets and practical guides to build skills"
+      },
+      "collaboration": {
+        "title": "Collaboration",
+        "description": "Invite your team and work together on continuous improvement"
+      }
+    },
+    "testimonials": {
+      "title": "Trusted by businesses",
+      "subtitle": "See what our users are saying"
+    },
+    "cta": {
+      "title": "Ready to optimize your business?",
+      "subtitle": "Start with a free diagnostic and discover your improvement opportunities.",
+      "button": "Get started now"
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your needs",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "annualSave": "Save 20%",
+    "perMonth": "/month",
+    "free": "Discovery",
+    "starter": "Starter",
+    "pro": "Pro",
+    "expert": "Expert",
+    "popular": "Popular",
+    "currentPlan": "Current plan",
+    "choosePlan": "Choose this plan",
+    "startFree": "Start for free",
+    "contactUs": "Contact us",
+    "features": {
+      "oneDiagnostic": "1 diagnostic",
+      "basicReport": "Basic report",
+      "threeActions": "3 priority actions",
+      "memorySheets": "Free memory sheets",
+      "unlimitedDiagnostics": "Unlimited diagnostics",
+      "fullReport": "Full report",
+      "tenActions": "10 tracked actions",
+      "basicTools": "Basic tools (VSM, Ishikawa, SWOT)",
+      "emailSupport": "Email support",
+      "advancedReport": "Advanced report + SWOT",
+      "unlimitedActions": "Unlimited actions",
+      "allTools": "All Lean tools",
+      "documentAnalysis": "AI document analysis",
+      "teamCollaboration": "Team collaboration (5 members)",
+      "prioritySupport": "Priority support",
+      "everything": "Everything in Pro +",
+      "customDiagnostic": "Custom diagnostic",
+      "apiAccess": "API access",
+      "whiteLabel": "White label",
+      "dedicatedSupport": "Dedicated support",
+      "onboarding": "Personalized onboarding"
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "Can I change plans anytime?",
+      "a1": "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.",
+      "q2": "Is there a minimum commitment?",
+      "a2": "No, all our plans are commitment-free. You can cancel at any time.",
+      "q3": "How does the free trial work?",
+      "a3": "The Discovery plan is free and unlimited in time. It allows you to complete one full diagnostic.",
+      "q4": "Are support packs included?",
+      "a4": "Support packs are complementary options, available à la carte regardless of your plan."
+    }
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "fullName": "Full name",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signInWith": "Sign in with",
+    "orContinueWith": "or continue with",
+    "google": "Google",
+    "sendResetLink": "Send reset link",
+    "backToLogin": "Back to sign in",
+    "resetSent": "A password reset email has been sent.",
+    "welcomeBack": "Welcome back!",
+    "createAccount": "Create an account",
+    "termsAgree": "By signing up, you agree to our",
+    "terms": "terms of service",
+    "and": "and",
+    "privacy": "privacy policy"
+  },
+  "dashboard": {
+    "greeting": "Hello",
+    "subtitle": "Here's an overview of your business",
+    "globalScore": "Global Score",
+    "estimatedSavings": "Estimated Savings",
+    "completedActions": "Completed Actions",
+    "progression": "Progression",
+    "topPriorities": "Top 3 Priorities",
+    "recentActivity": "Recent Activity",
+    "upcomingActions": "Upcoming Actions",
+    "noData": "No diagnostic yet",
+    "noDataDesc": "Start by running your first diagnostic to see your results here.",
+    "startDiagnostic": "Run a diagnostic"
+  },
+  "diagnostic": {
+    "new": "New diagnostic",
+    "continue": "Resume",
+    "saveAndResume": "Save and resume later",
+    "progress": "Progress",
+    "step": "Step",
+    "of": "of",
+    "next": "Next",
+    "previous": "Previous",
+    "skip": "Skip",
+    "finish": "Finish",
+    "framing": {
+      "title": "Project framing",
+      "subtitle": "These 3 questions help us calibrate your diagnostic",
+      "goalType": "What is your main objective?",
+      "increaseRevenue": "Increase revenue",
+      "reduceCosts": "Reduce costs",
+      "goalAmount": "What amount are you targeting?",
+      "goalAmountPlaceholder": "e.g. 50000",
+      "timeHorizon": "Over what time horizon?",
+      "months": "months",
+      "autonomy": "What level of support do you want?",
+      "self": "Self-guided",
+      "selfDesc": "I want to work independently with the tools",
+      "guided": "Guided",
+      "guidedDesc": "I want recommendations and advice",
+      "accompanied": "Accompanied",
+      "accompaniedDesc": "I want an expert by my side"
+    },
+    "profile": {
+      "title": "Tell us about your company",
+      "subtitle": "This information helps us tailor the diagnostic to your context",
+      "companyName": "Company name",
+      "sector": "Industry",
+      "employees": "Number of employees",
+      "revenue": "Annual revenue (€)",
+      "location": "Location",
+      "products": "Describe your products/services",
+      "clients": "Number of clients",
+      "competitors": "Your main competitors"
+    },
+    "documents": {
+      "title": "Do you have documents to share?",
+      "subtitle": "Invoices, quotes, financial statements... our AI tools can extract useful data.",
+      "upload": "Drag files here or click to select",
+      "formats": "PDF, Excel, Word, Images (max 10 MB)",
+      "skipStep": "Skip this step"
+    },
+    "wastes": {
+      "title": "8 Wastes Assessment",
+      "subtitle": "Evaluate each aspect of your business",
+      "overproduction": "Overproduction",
+      "waiting": "Waiting",
+      "transport": "Unnecessary Transport",
+      "overprocessing": "Over-processing",
+      "inventory": "Excess Inventory",
+      "motion": "Unnecessary Motion",
+      "defects": "Defects / Rework",
+      "skills": "Underutilized Skills",
+      "never": "Never",
+      "always": "Systematic",
+      "rarely": "Rarely",
+      "sometimes": "Sometimes",
+      "often": "Often"
+    },
+    "insights": {
+      "positive": "Good point!",
+      "warning": "Watch out",
+      "tip": "Tip"
+    },
+    "results": {
+      "title": "Your Results",
+      "subtitle": "Here's the complete analysis of your business",
+      "globalScore": "Global Score",
+      "wasteRadar": "8 Wastes Radar",
+      "topIssues": "Key improvement areas",
+      "recommendations": "Recommendations",
+      "downloadReport": "Download report",
+      "startRoadmap": "Create my roadmap",
+      "scoreExcellent": "Excellent! Your business is well optimized.",
+      "scoreGood": "Good! Some improvements are possible.",
+      "scoreMedium": "Significant improvement opportunities exist.",
+      "scoreLow": "Urgent actions are recommended."
+    }
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "Your prioritized action plan",
+    "addAction": "Add action",
+    "quickWin": "Quick Win",
+    "shortTerm": "Short term",
+    "structural": "Structural",
+    "transformation": "Transformation",
+    "estimatedGain": "Estimated gain",
+    "effort": "Effort",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "dueDate": "Due date",
+    "assignedTo": "Assigned to",
+    "status": {
+      "todo": "To do",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "skipped": "Skipped"
+    },
+    "totalGains": "Total estimated gains",
+    "completionRate": "Completion rate"
+  },
+  "tools": {
+    "title": "Lean & Strategic Tools",
+    "subtitle": "Interactive tools to deepen your analysis",
+    "vsm": "Value Stream Mapping",
+    "vsmDesc": "Map your value streams to identify waste",
+    "ishikawa": "Ishikawa Diagram",
+    "ishikawaDesc": "Analyze root causes of your problems",
+    "a3": "A3 Report",
+    "a3Desc": "Structure your problem-solving on one page",
+    "swot": "SWOT Analysis",
+    "swotDesc": "Assess strengths, weaknesses, opportunities and threats",
+    "dmaic": "DMAIC",
+    "dmaicDesc": "Follow the Six Sigma methodology step by step",
+    "steeple": "STEEPLE Analysis",
+    "steepleDesc": "Analyze your macro-environment",
+    "hoshin": "Hoshin Kanri Matrix",
+    "hoshinDesc": "Deploy your strategy into operational objectives",
+    "porter": "Porter's 5 Forces",
+    "porterDesc": "Analyze competitive forces in your market",
+    "bcg": "BCG Matrix",
+    "bcgDesc": "Position your products on the growth/market share matrix",
+    "mckinsey": "McKinsey Matrix",
+    "mckinseyDesc": "Evaluate attractiveness and competitive position",
+    "locked": "Available with the",
+    "open": "Open tool"
+  },
+  "training": {
+    "title": "Training",
+    "subtitle": "Build your Lean Management skills",
+    "videos": "Videos",
+    "sheets": "Memory Sheets",
+    "guides": "Practical Guides",
+    "duration": "Duration",
+    "minutes": "min",
+    "completed": "Completed",
+    "inProgress": "In progress",
+    "start": "Start",
+    "resume": "Resume"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "profile": "Profile",
+    "team": "Team",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Changes saved"
+  },
+  "support": {
+    "title": "Expert support packs",
+    "subtitle": "Personalized guidance from our Lean consultants",
+    "coupDePouce": "Quick Help",
+    "acceleration": "Acceleration",
+    "transformation": "Transformation",
+    "hours": "hours",
+    "book": "Book",
+    "features": {
+      "videoCall": "Framing video call",
+      "actionPlan": "Personalized action plan",
+      "followUp": "2-week follow-up",
+      "deepDive": "Deep dive analysis",
+      "workshopFacilitation": "Workshop facilitation",
+      "monthlyFollowUp": "Monthly follow-up (3 months)",
+      "fullAudit": "Full on-site audit",
+      "implementationSupport": "Implementation support",
+      "quarterlyReview": "Quarterly review (1 year)",
+      "teamTraining": "Team training (1 day)"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "yes": "Yes",
+    "no": "No",
+    "maybe": "I don't know",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "search": "Search",
+    "filter": "Filter",
+    "sortBy": "Sort by",
+    "noResults": "No results",
+    "comingSoon": "Coming soon",
+    "euro": "€",
+    "percent": "%"
+  }
+}
