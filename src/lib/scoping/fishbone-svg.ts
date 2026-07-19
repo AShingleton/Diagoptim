@@ -2,38 +2,36 @@ import type { ScopingSynthesis } from "@/lib/ai/engine";
 
 type Causes = ScopingSynthesis["ishikawa"]["causes"];
 
+// EmbraceIA orange hero + a coordinated 6-colour category palette (readability, like standard Ishikawa templates).
 const ORANGE = "#F06020";
-const ORANGE_DARK = "#C74E17";
-const INK = "#2C2C2C";
-const GREY = "#5B6470";
+const INK = "#2C3E50";
+const GREY = "#8A97A5";
+const RIB = "#B9C2CC";
 
-const TOP = [
-  { key: "man", label: "Main d'oeuvre" },
-  { key: "method", label: "Methodes" },
-  { key: "measurement", label: "Mesure" },
+const CATS = [
+  { key: "man", label: "Main d'oeuvre", color: "#E8542F", icon: "users" },
+  { key: "method", label: "Methodes", color: "#F2A03D", icon: "list" },
+  { key: "measurement", label: "Mesure", color: "#2FB6A3", icon: "gauge" },
+  { key: "machine", label: "Machines", color: "#3D9BE9", icon: "cog" },
+  { key: "material", label: "Matieres", color: "#8E6FD1", icon: "box" },
+  { key: "environment", label: "Milieu", color: "#2C5CC4", icon: "globe" },
 ] as const;
-const BOTTOM = [
-  { key: "machine", label: "Machines" },
-  { key: "material", label: "Matieres" },
-  { key: "environment", label: "Milieu" },
-] as const;
+// index 0,1,2 = TOP ; 3,4,5 = BOTTOM
 
-const CX = [300, 620, 940]; // category column centres
-const W = 1420;
-const H = 900;
-const SPINE_Y = 430;
-const BOX_W = 190;
-const BOX_H = 40;
-const TOP_BOX_Y = 40;
-const BOT_BOX_Y = 774;
-const LINE_H = 17;
-const CAUSE_MAX = 5;
-const WRAP_CHARS = 28;
+// Lucide-style stroke icon paths (24x24), drawn white inside the category circle.
+const ICONS: Record<string, string> = {
+  users:
+    "M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20 M10 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4 M15 4.6a3.5 3.5 0 0 1 0 6.8",
+  list: "M8 6h11 M8 12h11 M8 18h11 M4 6h.01 M4 12h.01 M4 18h.01",
+  gauge: "M12 14l4-4 M20.5 15a8.5 8.5 0 1 0-17 0",
+  cog: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M12 2v3 M12 19v3 M4.2 4.2l2.1 2.1 M17.7 17.7l2.1 2.1 M2 12h3 M19 12h3 M4.2 19.8l2.1-2.1 M17.7 6.3l2.1-2.1",
+  box: "M21 8v8l-9 5-9-5V8l9-5 9 5 M3.5 7.5 12 12l8.5-4.5 M12 12v9",
+  globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18 M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18",
+};
 
 const esc = (s: string) =>
   (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** Greedy word-wrap to maxChars/line, capped at maxLines (… on overflow). */
 function wrap(text: string, maxChars: number, maxLines: number): string[] {
   const words = (text || "").split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -48,86 +46,90 @@ function wrap(text: string, maxChars: number, maxLines: number): string[] {
     }
   }
   if (cur && lines.length < maxLines) lines.push(cur);
-  if (lines.length >= maxLines) {
-    const joined = lines.join(" ");
-    if (joined.length < (text || "").length - 1) {
-      lines[maxLines - 1] = lines[maxLines - 1].slice(0, WRAP_CHARS - 1).trimEnd() + "…";
-    }
+  if (lines.length >= maxLines && lines.join(" ").length < (text || "").length - 1) {
+    lines[maxLines - 1] = lines[maxLines - 1].slice(0, maxChars - 1).trimEnd() + "…";
   }
   return lines.slice(0, maxLines);
 }
 
-function wrappedCauses(causes: string[]): string[][] {
-  return causes.slice(0, CAUSE_MAX).map((c) => wrap(c, WRAP_CHARS, 2));
-}
-
-function blockHeight(wrapped: string[][]): number {
-  return wrapped.reduce((h, lines) => h + lines.length * LINE_H + 5, 0);
-}
-
-/** Renders causes top-to-bottom from topY, left-aligned ending at ~cx (never crossing the rib). */
-function causeBlock(cx: number, topY: number, wrapped: string[][]): string {
-  const x = cx - 158;
-  let out = "";
-  let y = topY;
-  for (const lines of wrapped) {
-    lines.forEach((line, i) => {
-      out += `<text x="${x}" y="${y}" font-family="FishSans" font-size="12.5" fill="${INK}">${esc(
-        (i === 0 ? "• " : "  ") + line,
-      )}</text>`;
-      y += LINE_H;
-    });
-    y += 5;
-  }
-  return out;
-}
-
-function categoryBox(cx: number, y: number, label: string): string {
-  const x = cx - BOX_W / 2;
-  return `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="8" fill="${ORANGE}"/>
-    <text x="${cx}" y="${y + BOX_H / 2 + 5}" text-anchor="middle" font-family="FishSans" font-weight="bold" font-size="17" fill="#fff">${esc(label)}</text>`;
-}
-
 export function buildFishboneSvg(causes: Causes, problem: string, rootCause: string): string {
-  const spineX1 = 60, spineX2 = 1140;
+  const W = 1500, H = 840;
+  const spineY = 415;
+  const spineX1 = 120, spineX2 = 1140;
+  const CX = [340, 660, 980]; // three columns
+  const CIRCLE_R = 34;
+  const topCY = 132, botCY = H - 168;
 
-  const column = (m: { key: string; label: string }, i: number, top: boolean): string => {
-    const cx = CX[i];
-    const boxY = top ? TOP_BOX_Y : BOT_BOX_Y;
-    const ribStartY = top ? boxY + BOX_H : boxY;
-    const attachX = cx + 150;
-    const wrapped = wrappedCauses((causes as Record<string, string[]>)[m.key] ?? []);
-    const topY = top ? boxY + BOX_H + 26 : boxY - 12 - blockHeight(wrapped);
-    return `${categoryBox(cx, boxY, m.label)}
-    <line x1="${cx}" y1="${ribStartY}" x2="${attachX}" y2="${SPINE_Y}" stroke="${ORANGE}" stroke-width="2.5"/>
-    ${causeBlock(cx, topY, wrapped)}`;
+  const iconG = (cx: number, cy: number, name: string) => `
+    <g transform="translate(${cx - 12},${cy - 12})" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="${ICONS[name]}"/>
+    </g>`;
+
+  const category = (idx: number): string => {
+    const c = CATS[idx];
+    const top = idx < 3;
+    const cx = CX[idx % 3];
+    const cy = top ? topCY : botCY;
+    const list = (causes as Record<string, string[]>)[c.key] ?? [];
+    // main rib: from circle (near spine side) to a point on the spine
+    const ribTopX = cx + 60;
+    const spineAttach = cx + 190;
+    const ax = cx + CIRCLE_R * 0.5, ay = top ? cy + CIRCLE_R * 0.7 : cy - CIRCLE_R * 0.7;
+    const rib = `<line x1="${ax}" y1="${ay}" x2="${spineAttach}" y2="${spineY}" stroke="${RIB}" stroke-width="3"/>`;
+    // sub-branches with cause text along the rib
+    const n = Math.min(list.length, 4);
+    let branches = "";
+    for (let i = 0; i < n; i++) {
+      const f = (i + 1) / (n + 1);
+      const px = ax + (spineAttach - ax) * f;
+      const py = ay + (spineY - ay) * f;
+      const bx = px - 150; // horizontal sub-branch to the left
+      branches += `<line x1="${px}" y1="${py}" x2="${bx}" y2="${py}" stroke="${RIB}" stroke-width="1.6"/>`;
+      const lines = wrap(list[i], 26, 2);
+      lines.forEach((ln, li) => {
+        branches += `<text x="${bx + 4}" y="${py - 6 - (lines.length - 1 - li) * 13}" font-family="FishSans" font-size="12" fill="${INK}">${esc(ln)}</text>`;
+      });
+    }
+    // circle + icon + label
+    const labelX = cx + CIRCLE_R + 10;
+    return `
+      ${rib}
+      ${branches}
+      <circle cx="${cx}" cy="${cy}" r="${CIRCLE_R}" fill="${c.color}"/>
+      ${iconG(cx, cy, c.icon)}
+      <text x="${labelX}" y="${cy + 6}" font-family="FishSans" font-weight="bold" font-size="18" fill="${c.color}">${esc(c.label)}</text>`;
   };
 
-  const problemLines = wrap(problem, 30, 6);
-  const headX = 1150, headW = 240, headY = SPINE_Y - 80, headH = 160;
-  const rootLines = wrap("Cause racine : " + rootCause, 160, 3);
+  // Effect arrow (right) — big orange chevron with the problem inside.
+  const ex = 1150, ew = 310, eh = 250, ey = spineY - eh / 2;
+  const tx = ex + 72; // clear of the left chevron notch
+  const effect = `
+    <polygon points="${ex},${ey} ${ex + ew - 70},${ey} ${ex + ew},${spineY} ${ex + ew - 70},${ey + eh} ${ex},${ey + eh} ${ex + 55},${spineY}"
+      fill="${ORANGE}"/>
+    <text x="${tx}" y="${spineY - 64}" font-family="FishSans" font-weight="bold" font-size="19" fill="#fff">PROBLEME</text>
+    ${wrap(problem, 22, 6)
+      .map((l, i) => `<text x="${tx}" y="${spineY - 40 + i * 16}" font-family="FishSans" font-size="12.5" fill="#fff">${esc(l)}</text>`)
+      .join("")}`;
+
+  // Tail arrow (left)
+  const tail = `<polygon points="30,${spineY} 110,${spineY - 34} 110,${spineY + 34}" fill="${ORANGE}"/>`;
+
+  const rootLines = wrap("Cause racine : " + rootCause, 175, 2);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <rect width="${W}" height="${H}" fill="#ffffff"/>
-  <text x="40" y="30" font-family="FishSans" font-weight="bold" font-size="26" fill="${ORANGE}">Ishikawa 6M</text>
+  <text x="40" y="42" font-family="FishSans" font-weight="bold" font-size="26" fill="${ORANGE}">Diagramme d'Ishikawa (6M)</text>
 
-  <line x1="${spineX1}" y1="${SPINE_Y}" x2="${spineX2}" y2="${SPINE_Y}" stroke="${INK}" stroke-width="3.5"/>
-  <polygon points="${spineX2},${SPINE_Y - 10} ${spineX2 + 18},${SPINE_Y} ${spineX2},${SPINE_Y + 10}" fill="${INK}"/>
+  <line x1="${spineX1}" y1="${spineY}" x2="${spineX2}" y2="${spineY}" stroke="${INK}" stroke-width="5"/>
+  ${tail}
+  ${effect}
+  ${[0, 1, 2, 3, 4, 5].map(category).join("")}
 
-  <rect x="${headX}" y="${headY}" width="${headW}" height="${headH}" rx="10" fill="${ORANGE}" stroke="${ORANGE_DARK}" stroke-width="2"/>
-  <text x="${headX + headW / 2}" y="${headY + 26}" text-anchor="middle" font-family="FishSans" font-weight="bold" font-size="15" fill="#fff">PROBLÈME</text>
-  ${problemLines
-    .map((l, i) => `<text x="${headX + 16}" y="${headY + 50 + i * 17}" font-family="FishSans" font-size="12.5" fill="#fff">${esc(l)}</text>`)
-    .join("")}
-
-  ${TOP.map((m, i) => column(m, i, true)).join("")}
-  ${BOTTOM.map((m, i) => column(m, i, false)).join("")}
-
-  <line x1="40" y1="${H - 58}" x2="${W - 40}" y2="${H - 58}" stroke="${ORANGE}" stroke-width="1"/>
+  <line x1="40" y1="${H - 54}" x2="${W - 40}" y2="${H - 54}" stroke="${ORANGE}" stroke-width="1"/>
   ${rootLines
     .map(
       (l, i) =>
-        `<text x="40" y="${H - 36 + i * 16}" font-family="FishSans" font-size="13" font-weight="${i === 0 ? "bold" : "normal"}" fill="${i === 0 ? INK : GREY}">${esc(l)}</text>`,
+        `<text x="40" y="${H - 32 + i * 16}" font-family="FishSans" font-size="13" font-weight="${i === 0 ? "bold" : "normal"}" fill="${i === 0 ? INK : GREY}">${esc(l)}</text>`,
     )
     .join("")}
 </svg>`;
