@@ -21,7 +21,8 @@ import type { ReportLocale } from "@/types/report";
 // Constants
 // ---------------------------------------------------------------------------
 
-const MODEL = "claude-sonnet-4-20250514";
+// claude-sonnet-4-20250514 was retired (404). Current capable model, overridable via env.
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
 const DEFAULT_MAX_TOKENS = 4_096;
