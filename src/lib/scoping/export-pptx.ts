@@ -302,11 +302,11 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     const causes = synth.ishikawa.causes as Record<string, string[]>;
 
     const drawCategory = (key: string, cx: number, side: "top" | "bottom") => {
-      const list = (causes[key] ?? []).slice(0, 5);
+      const list = (causes[key] ?? []).slice(0, 4);
       const runs: Runs = list.length
         ? list.map((cause) => ({
-            text: stripMarkdown(trunc(cause, 60)),
-            options: { bullet: { characterCode: "2022", indent: 10 }, color: BRAND.ink, breakLine: true, paraSpaceAfter: 3 },
+            text: stripMarkdown(trunc(cause, 75)),
+            options: { bullet: { characterCode: "2022", indent: 10 }, color: BRAND.ink, breakLine: true, paraSpaceAfter: 2 },
           }))
         : [{ text: "—", options: { color: BRAND.grey } }];
 
@@ -315,15 +315,15 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
         s.addShape("line", { x: cx + 0.2, y: 1.3, w: 0.75, h: SPINE_Y - 1.3, line: { color: BRAND.orange, width: 1.75 } });
         s.addShape("roundRect", { x: cx - 0.7, y: 0.8, w: 1.4, h: 0.45, fill: { color: BRAND.orange } });
         s.addText(M6[key], { x: cx - 0.7, y: 0.8, w: 1.4, h: 0.45, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle" });
-        // Cause box sits to the LEFT of the bone (bone starts at cx+0.2), so text never crosses the line.
-        s.addText(runs, { x: cx - 1.9, y: 1.5, w: 2.1, h: 2.0, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
+        // Cause box sits on the OUTER (left) side of the bone, just under the pill; text never crosses the rib.
+        s.addText(runs, { x: cx - 2.35, y: 1.32, w: 2.2, h: 2.3, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
       } else {
         // ONE diagonal bone: spine (upper-right) -> pill inner edge (lower). flipH keeps all bottom bones parallel.
         s.addShape("line", { x: cx + 0.2, y: SPINE_Y, w: 0.75, h: 6.28 - SPINE_Y, flipH: true, line: { color: BRAND.orange, width: 1.75 } });
         s.addShape("roundRect", { x: cx - 0.7, y: 6.28, w: 1.4, h: 0.45, fill: { color: BRAND.orange } });
         s.addText(M6[key], { x: cx - 0.7, y: 6.28, w: 1.4, h: 0.45, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle" });
-        // Cause box sits to the LEFT of the bone, just above the pill.
-        s.addText(runs, { x: cx - 1.9, y: 4.4, w: 2.1, h: 2.0, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
+        // Cause box sits on the OUTER (left) side of the bone, just above the pill; text never crosses the rib.
+        s.addText(runs, { x: cx - 2.35, y: 3.95, w: 2.2, h: 2.3, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
       }
     };
 
@@ -383,6 +383,53 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     { h: "🗺️  Priorisation & roadmap", body: c.priorisation },
     { h: "✅  Critères de recette", body: c.criteresDeRecette },
   );
+
+  // ---------- 11. Prochaines étapes (closing) ----------
+  {
+    const s = pptx.addSlide();
+    header(s, "Prochaines étapes", "🚀");
+    // Big card holds the action list; ends above the CTA line so nothing overlaps.
+    s.addShape("roundRect", { x: 0.4, y: 1.1, w: PW - 0.8, h: 4.55, fill: { color: BRAND.orangeLight }, line: { color: BRAND.orange, width: 1 } });
+    s.addShape("rect", { x: 0.4, y: 1.1, w: 0.14, h: 4.55, fill: { color: BRAND.orange } });
+
+    const steps = [
+      "Valider ce cahier des charges avec les parties prenantes",
+      "Prioriser le lot 1 (quick wins à fort impact)",
+      "Lancer un POC sur le cas d'usage prioritaire (agent IA / automatisation)",
+      "Planifier le déploiement et la conduite du changement",
+      "Mesurer les gains via les critères de recette définis",
+    ];
+    const runs: Runs = [
+      { text: "Pour transformer ce cadrage en résultats :", options: { bold: true, color: BRAND.orangeDark, fontSize: 16, breakLine: true, paraSpaceAfter: 10 } },
+      ...steps.map((t) => ({
+        text: t,
+        options: { bullet: { characterCode: "25B8", indent: 20 }, color: BRAND.ink, fontSize: 14, breakLine: true, paraSpaceAfter: 8 },
+      })),
+    ];
+    s.addText(runs, { x: 0.85, y: 1.45, w: PW - 1.7, h: 3.9, fontSize: 14, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
+
+    // White chip + EmbraceIA logo, centred above the CTA line.
+    const logoW = 0.55;
+    const logoH = 0.55;
+    const logoX = (PW - logoW) / 2;
+    const logoY = 5.85;
+    s.addShape("roundRect", { x: logoX - 0.07, y: logoY - 0.07, w: logoW + 0.14, h: logoH + 0.14, rectRadius: 0.06, fill: { color: BRAND.white }, line: { color: BRAND.orange, width: 1 } });
+    s.addImage({ data: EMBRACEIA_LOGO_DATAURI, x: logoX, y: logoY, w: logoW, h: logoH });
+
+    // Centred orange call-to-action line.
+    s.addText("EmbraceIA — Excellence opérationnelle & IA · www.embraceIA.com", {
+      x: 0.5,
+      y: 6.55,
+      w: PW - 1,
+      h: 0.45,
+      fontSize: 15,
+      bold: true,
+      color: BRAND.orange,
+      align: "center",
+      valign: "middle",
+    });
+    footer(s);
+  }
 
   return (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
 }

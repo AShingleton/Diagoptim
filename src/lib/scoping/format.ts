@@ -3,6 +3,27 @@
  * component AND the PDF/PPTX exporters so the rendering is consistent).
  */
 
+/**
+ * Normalises text to characters jsPDF's standard (WinAnsi) font can measure and
+ * render. Non-measurable characters (smart quotes, dashes, arrows, ellipsis,
+ * non-breaking spaces…) otherwise break jsPDF's word-wrap → overflow + a garbled
+ * "letter-spaced" render. Call this on every string sent to the PDF exporter.
+ */
+export function toPdfSafe(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/[‘’‚′ʼ]/g, "'")
+    .replace(/[“”„″«»]/g, '"')
+    .replace(/[–—−]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/[←-⇿➔➤⮕]/g, "->")
+    .replace(/[   ​  ]/g, " ")
+    .replace(/œ/g, "oe")
+    .replace(/Œ/g, "OE")
+    .replace(/€/g, "EUR")
+    .replace(/[^\x20-\xFF\n\r\t]/g, ""); // drop anything still outside Latin-1
+}
+
 /** Removes Markdown emphasis the model sometimes emits (**bold**, *italic*, `code`, # headings). */
 export function stripMarkdown(text: string): string {
   if (!text) return "";

@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { parseEnumeration, stripMarkdown } from "@/lib/scoping/format";
+import { parseEnumeration, stripMarkdown, toPdfSafe } from "@/lib/scoping/format";
 import { BRAND, EMBRACEIA_LOGO_DATAURI } from "@/lib/scoping/brand";
 import type { ScopingSynthesis } from "@/lib/ai/engine";
 
@@ -38,13 +38,18 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
     }
   };
 
+  // Normalise every measured/printed string to Latin-1 so jsPDF can measure it.
+  // Unmeasurable chars (smart quotes, arrows…) break splitTextToSize word-wrap,
+  // producing letter-spacing + overflow. Always route text through clean().
+  const clean = (t: string): string => toPdfSafe(stripMarkdown(t));
+
   const heading = (text: string, size = 13) => {
     y += 10; // ~10pt space above every section
     ensure(size + 14);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(size);
     doc.setTextColor(...rgb(BRAND.orange));
-    for (const line of doc.splitTextToSize(stripMarkdown(text), contentWidth)) {
+    for (const line of doc.splitTextToSize(clean(text), contentWidth)) {
       doc.text(line, margin, y);
       y += size + 2;
     }
@@ -63,7 +68,7 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
     doc.setFont("helvetica", "bold");
     doc.setFontSize(BODY_SIZE);
     doc.setTextColor(...rgb(BRAND.orange));
-    for (const line of doc.splitTextToSize(stripMarkdown(text), contentWidth)) {
+    for (const line of doc.splitTextToSize(clean(text), contentWidth)) {
       doc.text(line, margin, y);
       y += LINE_H;
     }
@@ -74,8 +79,8 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
     doc.setFont("helvetica", "normal");
     doc.setFontSize(BODY_SIZE);
     doc.setTextColor(...rgb(BRAND.ink));
-    const clean = stripMarkdown(text) || "-";
-    for (const line of doc.splitTextToSize(clean, contentWidth)) {
+    const body = clean(text) || "-";
+    for (const line of doc.splitTextToSize(body, contentWidth)) {
       ensure(LINE_H);
       doc.text(line, margin, y);
       y += LINE_H;
@@ -91,8 +96,8 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
     const wrapW = contentWidth - 26;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(BODY_SIZE);
-    const clean = stripMarkdown(text) || "-";
-    const lines = doc.splitTextToSize(clean, wrapW);
+    const body = clean(text) || "-";
+    const lines = doc.splitTextToSize(body, wrapW);
     lines.forEach((line: string, i: number) => {
       ensure(LINE_H);
       if (i === 0) {
@@ -111,14 +116,14 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   // proper bullets (intro as a paragraph, each item as a bullet); otherwise
   // renders a wrapped paragraph. Markdown is stripped up-front.
   const prose = (text: string) => {
-    const clean = stripMarkdown(text);
-    const parsed = parseEnumeration(clean);
+    const body = clean(text);
+    const parsed = parseEnumeration(body);
     if (parsed && parsed.items.length) {
       if (parsed.intro) paragraph(parsed.intro);
       parsed.items.forEach(bullet);
       y += 4;
     } else {
-      paragraph(clean);
+      paragraph(body);
     }
   };
 
@@ -132,7 +137,7 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.setTextColor(...rgb(BRAND.grey));
-  doc.text(stripMarkdown(projectName), margin, y);
+  doc.text(clean(projectName), margin, y);
   y += 14;
   doc.setDrawColor(...rgb(BRAND.orange));
   doc.setLineWidth(0.75);
@@ -168,7 +173,7 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   doc.text("Cause racine : ", margin, y);
   const labelW = doc.getTextWidth("Cause racine : ");
   doc.setFont("helvetica", "normal");
-  const rcLines = doc.splitTextToSize(stripMarkdown(synth.ishikawa.rootCause) || "-", contentWidth - labelW);
+  const rcLines = doc.splitTextToSize(clean(synth.ishikawa.rootCause) || "-", contentWidth - labelW);
   rcLines.forEach((line: string, i: number) => {
     ensure(LINE_H);
     doc.text(line, i === 0 ? margin + labelW : margin, y);
@@ -177,106 +182,125 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   y += 4;
 
   // --- Ishikawa fishbone diagram (own landscape page) ---
+  // Canonical 6M fishbone. The page is split into three non-overlapping zones:
+  //   Top band    (y 20 -> 70):        title only
+  //   Middle band (y ~80 -> lh-90):    the diagram (spine, head, ribs, causes)
+  //   Bottom band (y lh-80 -> lh-30):  root-cause caption only
   const drawFishbone = () => {
     doc.addPage("a4", "landscape");
     const lw = doc.internal.pageSize.getWidth();
     const lh = doc.internal.pageSize.getHeight();
-    const midY = lh / 2;
+    const spineY = lh / 2;
 
-    // Title top-left
+    // --- Top zone: title top-left only ---
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(...rgb(BRAND.orange));
     doc.text("Ishikawa 6M", 40, 40);
 
-    // Spine
-    const spineStartX = 40;
-    const spineEndX = lw - 190;
+    // --- Middle zone: spine ---
+    const spineStartX = 45;
+    const spineEndX = lw - 200; // stops just before the effect head
     doc.setDrawColor(...rgb(BRAND.ink));
     doc.setLineWidth(2);
-    doc.line(spineStartX, midY, spineEndX, midY);
-    // Arrowhead at right end of spine
-    doc.line(spineEndX, midY, spineEndX - 12, midY - 7);
-    doc.line(spineEndX, midY, spineEndX - 12, midY + 7);
+    doc.line(spineStartX, spineY, spineEndX, spineY);
+    // Arrowhead at the right end, pointing into the effect head
+    doc.line(spineEndX, spineY, spineEndX - 12, spineY - 7);
+    doc.line(spineEndX, spineY, spineEndX - 12, spineY + 7);
 
-    // Effect head (problem)
+    // Effect head (the problem)
     doc.setFillColor(...rgb(BRAND.orange));
-    doc.roundedRect(lw - 185, midY - 40, 150, 80, 6, 6, "F");
+    doc.roundedRect(lw - 195, spineY - 42, 160, 84, 6, 6, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text("PROBLEME", lw - 175, midY - 24);
-    doc.setFontSize(7);
+    doc.text("PROBLEME", lw - 187, spineY - 26);
     doc.setFont("helvetica", "normal");
-    const headLines = doc.splitTextToSize(stripMarkdown(synth.ishikawa.problem) || "-", 140);
-    let hy = midY - 12;
-    for (const line of headLines.slice(0, 8)) {
-      doc.text(line, lw - 178, hy);
-      hy += 8;
+    doc.setFontSize(7.5);
+    const headLines = doc.splitTextToSize(clean(synth.ishikawa.problem) || "-", 148);
+    let hy = spineY - 12;
+    for (const line of headLines.slice(0, 5)) {
+      doc.text(line, lw - 187, hy);
+      hy += 9;
     }
 
-    // 6 categories: top row + bottom row
-    const topKeys: string[] = ["man", "method", "measurement"];
-    const bottomKeys: string[] = ["machine", "material", "environment"];
-    const xCentres = [180, 380, 580];
-    const yTop = 70;
-    const yBot = lh - 70;
-    const pillW = 120;
-    const pillH = 22;
+    // --- Middle zone: 6 category ribs ---
+    // TOP row = man / method / measurement ; BOTTOM row = machine / material / environment
+    const topKeys = ["man", "method", "measurement"];
+    const bottomKeys = ["machine", "material", "environment"];
+    const xCentres = [190, 400, 610];
+    const boxW = 130;
+    const boxH = 20;
+    const yTop = 95; // top edge of the top-row label boxes
+    const yBot = lh - 100; // top edge of the bottom-row label boxes
+    const attachDX = 70; // spine attachment offset -> keeps each row's ribs parallel
 
     const drawCategory = (key: string, xc: number, top: boolean) => {
-      const list = (causes[key] ?? []).slice(0, 4);
-      const pillY = top ? yTop - pillH / 2 : yBot - pillH / 2;
+      const boxY = top ? yTop : yBot;
 
-      // Pill
+      // Category label box
       doc.setFillColor(...rgb(BRAND.orange));
-      doc.roundedRect(xc - pillW / 2, pillY, pillW, pillH, 4, 4, "F");
+      doc.roundedRect(xc - boxW / 2, boxY, boxW, boxH, 4, 4, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       const label = M6[key];
-      doc.text(label, xc - doc.getTextWidth(label) / 2, pillY + pillH / 2 + 3);
+      doc.text(label, xc - doc.getTextWidth(label) / 2, boxY + boxH / 2 + 3);
 
-      // Bone: diagonal line from pill toward spine base point below/above it.
-      // Base point sits on the spine, offset so top bones stay parallel and
-      // bottom bones stay parallel.
-      const baseX = xc + 90;
+      // Rib: single diagonal from the box's inner edge to the spine attachment.
+      // Start point is identical offset for every box in a row, so ribs stay parallel.
       doc.setDrawColor(...rgb(BRAND.orange));
       doc.setLineWidth(1.5);
-      if (top) {
-        doc.line(xc, yTop + pillH / 2, baseX, midY);
-      } else {
-        doc.line(xc, yBot - pillH / 2, baseX, midY);
-      }
+      const startY = top ? boxY + boxH : boxY; // inner-bottom (top) / inner-top (bottom)
+      doc.line(xc, startY, xc + attachDX, spineY);
 
-      // Causes text on the outer side of the pill
+      // Causes: up to 4, left-aligned inside the wedge (x = xc-95 .. xc+35),
+      // stacked so the block sits between the box and the spine (no overlap).
+      const list = (causes[key] ?? []).slice(0, 4);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...rgb(BRAND.ink));
-      let cy = top ? pillY - 6 - (list.length - 1) * 11 : pillY + pillH + 12;
+      const textX = xc - 95;
+      const lineGap = 9;
+      const rows: string[] = [];
       for (const cause of list) {
-        const clean = stripMarkdown(cause);
-        const first = doc.splitTextToSize(clean, 150)[0] ?? "";
-        const truncated = first.length > 40 ? first.slice(0, 39) + "…" : first;
-        doc.text("- " + truncated, xc - pillW / 2, cy);
-        cy += 11;
+        const truncated = cause.length > 70 ? cause.slice(0, 69) + "..." : cause;
+        const wrapped = doc.splitTextToSize(clean(truncated), 120).slice(0, 2);
+        wrapped.forEach((ln: string, i: number) => rows.push((i === 0 ? "- " : "  ") + ln));
+      }
+      const blockH = rows.length * lineGap;
+      // Top row: start just below the box, grow downward toward the spine.
+      // Bottom row: end just above the box, so the block sits above it (toward the spine).
+      let cy = top ? boxY + boxH + 12 : boxY - 12 - blockH + lineGap;
+      for (const r of rows) {
+        doc.text(r, textX, cy);
+        cy += lineGap;
       }
     };
 
     topKeys.forEach((k, i) => drawCategory(k, xCentres[i], true));
     bottomKeys.forEach((k, i) => drawCategory(k, xCentres[i], false));
 
-    // Bottom caption: root cause
-    doc.setFont("helvetica", "normal");
+    // --- Bottom band: root-cause caption only, with a thin orange separator above ---
+    const bandY = lh - 80;
+    doc.setDrawColor(...rgb(BRAND.orange));
+    doc.setLineWidth(0.75);
+    doc.line(40, bandY, lw - 40, bandY);
+
     doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...rgb(BRAND.ink));
+    const rcLabel = "Cause racine : ";
+    doc.text(rcLabel, 40, bandY + 20);
+    const rcLabelW = doc.getTextWidth(rcLabel);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(...rgb(BRAND.grey));
-    const rc = "Cause racine : " + (stripMarkdown(synth.ishikawa.rootCause) || "-");
-    const capLines = doc.splitTextToSize(rc, lw - 80);
-    let capY = lh - 30;
-    for (const line of capLines.slice(0, 2)) {
-      doc.text(line, 40, capY);
+    const rcLines = doc.splitTextToSize(clean(synth.ishikawa.rootCause) || "-", lw - 80 - rcLabelW);
+    let capY = bandY + 20;
+    rcLines.forEach((line: string, i: number) => {
+      doc.text(line, i === 0 ? 40 + rcLabelW : 40, capY);
       capY += 11;
-    }
+    });
 
     // Back to portrait for the rest of the document
     doc.addPage("a4", "portrait");
