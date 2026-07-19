@@ -14,7 +14,7 @@ export function AnswerForm({ action }: { action: (formData: FormData) => Promise
         required
         rows={4}
         autoFocus
-        placeholder="Votre reponse..."
+        placeholder="Votre réponse..."
         className="w-full rounded-lg border border-input bg-muted/30 p-3 text-sm outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
       />
       <Button type="submit" disabled={pending} className="justify-self-start">

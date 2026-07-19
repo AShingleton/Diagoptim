@@ -28,7 +28,7 @@ export default async function RespondPage({
       <div className="mx-auto max-w-2xl p-6 text-center">
         <h1 className="text-2xl font-bold">Merci !</h1>
         <p className="mt-3 text-muted-foreground">
-          Votre point de vue a bien ete enregistre. Il alimentera l&apos;analyse (Ishikawa 6M) et le cahier des charges du projet. Vous pouvez fermer cette page.
+          Votre point de vue a bien été enregistré. Il alimentera l&apos;analyse (Ishikawa 6M) et le cahier des charges du projet. Vous pouvez fermer cette page.
         </p>
       </div>
     );
