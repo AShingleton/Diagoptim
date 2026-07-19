@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';
+import { canAccessDiagnostic } from '@/lib/diagnostic/access';
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function GET(
       return NextResponse.json({ error: 'Diagnostic not found' }, { status: 404 });
     }
 
-    if (diagnostic.company.userId !== userId) {
+    if (!(await canAccessDiagnostic(prisma, diagnosticId, userId))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

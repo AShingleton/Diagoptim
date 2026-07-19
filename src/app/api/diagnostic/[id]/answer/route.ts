@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';
+import { canAccessDiagnostic } from '@/lib/diagnostic/access';
 
 const answerSchema = z.object({
   questionKey: z.string().min(1),
@@ -35,7 +36,7 @@ export async function POST(
       return NextResponse.json({ error: 'Diagnostic not found' }, { status: 404 });
     }
 
-    if (diagnostic.company.userId !== userId) {
+    if (!(await canAccessDiagnostic(prisma, diagnosticId, userId))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
