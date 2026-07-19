@@ -373,17 +373,6 @@ function Header() {
                 {t("nav.login")}
               </Button>
             </Link>
-            <Link href={`/${locale}/register`}>
-              <Button
-                className={
-                  scrolled
-                    ? ""
-                    : "bg-white text-[#1B4F72] hover:bg-white/90"
-                }
-              >
-                {t("nav.register")}
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -443,9 +432,6 @@ function Header() {
                   <Button variant="outline" className="w-full">
                     {t("nav.login")}
                   </Button>
-                </Link>
-                <Link href={`/${locale}/register`} className="flex-1">
-                  <Button className="w-full">{t("nav.register")}</Button>
                 </Link>
               </div>
             </div>

@@ -1,52 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import Link from "next/link";
-
-function AnimatedCounter({
-  target,
-  suffix,
-  label,
-  inView,
-}: {
-  target: number;
-  suffix: string;
-  label: string;
-  inView: boolean;
-}) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const duration = 2000;
-    const increment = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
-    return () => clearInterval(timer);
-  }, [inView, target]);
-
-  return (
-    <div className="text-center">
-      <div className="text-3xl font-bold text-white sm:text-4xl">
-        {count.toLocaleString("fr-FR")}
-        {suffix}
-      </div>
-      <div className="mt-1 text-sm text-white/70">{label}</div>
-    </div>
-  );
-}
 
 const containerVariants = {
   hidden: {},
@@ -69,27 +28,7 @@ const itemVariants = {
 export default function Hero() {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  const statsInView = useInView(statsRef, { once: true, amount: 0.5 });
-
-  const stats = [
-    {
-      target: 500,
-      suffix: "+",
-      label: t("landing.hero.stats.companies"),
-    },
-    {
-      target: 2,
-      suffix: "M€+",
-      label: t("landing.hero.stats.savings"),
-    },
-    {
-      target: 98,
-      suffix: "%",
-      label: t("landing.hero.stats.satisfaction"),
-    },
-  ];
 
   return (
     <section
@@ -187,23 +126,6 @@ export default function Hero() {
                 {t("landing.hero.ctaSecondary")}
               </Button>
             </Link>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            ref={statsRef}
-            variants={itemVariants}
-            className="mx-auto mt-16 grid max-w-xl grid-cols-3 gap-8 rounded-2xl border border-white/10 bg-white/5 px-6 py-8 backdrop-blur-sm sm:mt-20 sm:max-w-2xl sm:gap-12"
-          >
-            {stats.map((stat, i) => (
-              <AnimatedCounter
-                key={i}
-                target={stat.target}
-                suffix={stat.suffix}
-                label={stat.label}
-                inView={statsInView}
-              />
-            ))}
           </motion.div>
         </motion.div>
       </div>
