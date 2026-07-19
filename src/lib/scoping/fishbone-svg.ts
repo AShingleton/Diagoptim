@@ -72,7 +72,7 @@ function causeBlock(cx: number, topY: number, wrapped: string[][]): string {
   let y = topY;
   for (const lines of wrapped) {
     lines.forEach((line, i) => {
-      out += `<text x="${x}" y="${y}" font-family="Arial" font-size="12.5" fill="${INK}">${esc(
+      out += `<text x="${x}" y="${y}" font-family="FishSans" font-size="12.5" fill="${INK}">${esc(
         (i === 0 ? "• " : "  ") + line,
       )}</text>`;
       y += LINE_H;
@@ -85,7 +85,7 @@ function causeBlock(cx: number, topY: number, wrapped: string[][]): string {
 function categoryBox(cx: number, y: number, label: string): string {
   const x = cx - BOX_W / 2;
   return `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="8" fill="${ORANGE}"/>
-    <text x="${cx}" y="${y + BOX_H / 2 + 5}" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="17" fill="#fff">${esc(label)}</text>`;
+    <text x="${cx}" y="${y + BOX_H / 2 + 5}" text-anchor="middle" font-family="FishSans" font-weight="bold" font-size="17" fill="#fff">${esc(label)}</text>`;
 }
 
 export function buildFishboneSvg(causes: Causes, problem: string, rootCause: string): string {
@@ -109,15 +109,15 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <rect width="${W}" height="${H}" fill="#ffffff"/>
-  <text x="40" y="30" font-family="Arial" font-weight="bold" font-size="26" fill="${ORANGE}">Ishikawa 6M</text>
+  <text x="40" y="30" font-family="FishSans" font-weight="bold" font-size="26" fill="${ORANGE}">Ishikawa 6M</text>
 
   <line x1="${spineX1}" y1="${SPINE_Y}" x2="${spineX2}" y2="${SPINE_Y}" stroke="${INK}" stroke-width="3.5"/>
   <polygon points="${spineX2},${SPINE_Y - 10} ${spineX2 + 18},${SPINE_Y} ${spineX2},${SPINE_Y + 10}" fill="${INK}"/>
 
   <rect x="${headX}" y="${headY}" width="${headW}" height="${headH}" rx="10" fill="${ORANGE}" stroke="${ORANGE_DARK}" stroke-width="2"/>
-  <text x="${headX + headW / 2}" y="${headY + 26}" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="15" fill="#fff">PROBLÈME</text>
+  <text x="${headX + headW / 2}" y="${headY + 26}" text-anchor="middle" font-family="FishSans" font-weight="bold" font-size="15" fill="#fff">PROBLÈME</text>
   ${problemLines
-    .map((l, i) => `<text x="${headX + 16}" y="${headY + 50 + i * 17}" font-family="Arial" font-size="12.5" fill="#fff">${esc(l)}</text>`)
+    .map((l, i) => `<text x="${headX + 16}" y="${headY + 50 + i * 17}" font-family="FishSans" font-size="12.5" fill="#fff">${esc(l)}</text>`)
     .join("")}
 
   ${TOP.map((m, i) => column(m, i, true)).join("")}
@@ -127,7 +127,7 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
   ${rootLines
     .map(
       (l, i) =>
-        `<text x="40" y="${H - 36 + i * 16}" font-family="Arial" font-size="13" font-weight="${i === 0 ? "bold" : "normal"}" fill="${i === 0 ? INK : GREY}">${esc(l)}</text>`,
+        `<text x="40" y="${H - 36 + i * 16}" font-family="FishSans" font-size="13" font-weight="${i === 0 ? "bold" : "normal"}" fill="${i === 0 ? INK : GREY}">${esc(l)}</text>`,
     )
     .join("")}
 </svg>`;
