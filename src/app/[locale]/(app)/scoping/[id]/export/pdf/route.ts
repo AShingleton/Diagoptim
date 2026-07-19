@@ -21,6 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ locale:
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="cahier-des-charges-${slug}.pdf"`,
+      "Cache-Control": "no-store, max-age=0",
     },
   });
 }

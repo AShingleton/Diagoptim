@@ -176,6 +176,115 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   });
   y += 4;
 
+  // --- Ishikawa fishbone diagram (own landscape page) ---
+  const drawFishbone = () => {
+    doc.addPage("a4", "landscape");
+    const lw = doc.internal.pageSize.getWidth();
+    const lh = doc.internal.pageSize.getHeight();
+    const midY = lh / 2;
+
+    // Title top-left
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(...rgb(BRAND.orange));
+    doc.text("Ishikawa 6M", 40, 40);
+
+    // Spine
+    const spineStartX = 40;
+    const spineEndX = lw - 190;
+    doc.setDrawColor(...rgb(BRAND.ink));
+    doc.setLineWidth(2);
+    doc.line(spineStartX, midY, spineEndX, midY);
+    // Arrowhead at right end of spine
+    doc.line(spineEndX, midY, spineEndX - 12, midY - 7);
+    doc.line(spineEndX, midY, spineEndX - 12, midY + 7);
+
+    // Effect head (problem)
+    doc.setFillColor(...rgb(BRAND.orange));
+    doc.roundedRect(lw - 185, midY - 40, 150, 80, 6, 6, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("PROBLEME", lw - 175, midY - 24);
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    const headLines = doc.splitTextToSize(stripMarkdown(synth.ishikawa.problem) || "-", 140);
+    let hy = midY - 12;
+    for (const line of headLines.slice(0, 8)) {
+      doc.text(line, lw - 178, hy);
+      hy += 8;
+    }
+
+    // 6 categories: top row + bottom row
+    const topKeys: string[] = ["man", "method", "measurement"];
+    const bottomKeys: string[] = ["machine", "material", "environment"];
+    const xCentres = [180, 380, 580];
+    const yTop = 70;
+    const yBot = lh - 70;
+    const pillW = 120;
+    const pillH = 22;
+
+    const drawCategory = (key: string, xc: number, top: boolean) => {
+      const list = (causes[key] ?? []).slice(0, 4);
+      const pillY = top ? yTop - pillH / 2 : yBot - pillH / 2;
+
+      // Pill
+      doc.setFillColor(...rgb(BRAND.orange));
+      doc.roundedRect(xc - pillW / 2, pillY, pillW, pillH, 4, 4, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      const label = M6[key];
+      doc.text(label, xc - doc.getTextWidth(label) / 2, pillY + pillH / 2 + 3);
+
+      // Bone: diagonal line from pill toward spine base point below/above it.
+      // Base point sits on the spine, offset so top bones stay parallel and
+      // bottom bones stay parallel.
+      const baseX = xc + 90;
+      doc.setDrawColor(...rgb(BRAND.orange));
+      doc.setLineWidth(1.5);
+      if (top) {
+        doc.line(xc, yTop + pillH / 2, baseX, midY);
+      } else {
+        doc.line(xc, yBot - pillH / 2, baseX, midY);
+      }
+
+      // Causes text on the outer side of the pill
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...rgb(BRAND.ink));
+      let cy = top ? pillY - 6 - (list.length - 1) * 11 : pillY + pillH + 12;
+      for (const cause of list) {
+        const clean = stripMarkdown(cause);
+        const first = doc.splitTextToSize(clean, 150)[0] ?? "";
+        const truncated = first.length > 40 ? first.slice(0, 39) + "…" : first;
+        doc.text("- " + truncated, xc - pillW / 2, cy);
+        cy += 11;
+      }
+    };
+
+    topKeys.forEach((k, i) => drawCategory(k, xCentres[i], true));
+    bottomKeys.forEach((k, i) => drawCategory(k, xCentres[i], false));
+
+    // Bottom caption: root cause
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...rgb(BRAND.grey));
+    const rc = "Cause racine : " + (stripMarkdown(synth.ishikawa.rootCause) || "-");
+    const capLines = doc.splitTextToSize(rc, lw - 80);
+    let capY = lh - 30;
+    for (const line of capLines.slice(0, 2)) {
+      doc.text(line, 40, capY);
+      capY += 11;
+    }
+
+    // Back to portrait for the rest of the document
+    doc.addPage("a4", "portrait");
+    y = margin;
+    doc.setTextColor(...rgb(BRAND.ink));
+  };
+  drawFishbone();
+
   // --- Cahier des charges ---
   const c = synth.cahierDesCharges;
   heading("Contexte & objectifs");
@@ -197,7 +306,10 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   prose(c.contraintesEtRisques);
 
   heading("Points de vue par role");
-  c.pointsDeVueParRole.forEach((r) => bullet(`${r.role} : ${r.synthese}`));
+  c.pointsDeVueParRole.forEach((r) => {
+    subHeading(r.role);
+    prose(r.synthese);
+  });
   y += 4;
 
   heading("Priorisation & roadmap");
