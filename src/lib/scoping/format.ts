@@ -1,11 +1,30 @@
 /**
  * Shared text formatting for the scoping synthesis (used by the on-screen Prose
  * component AND the PDF/PPTX exporters so the rendering is consistent).
- *
- * Detects an inline numbered enumeration such as
- *   "... : (1) A ; (2) B ; (3) C"
- * and returns the intro + the list items; returns null when there is no such
- * enumeration (render the text as a plain paragraph).
+ */
+
+/** Removes Markdown emphasis the model sometimes emits (**bold**, *italic*, `code`, # headings). */
+export function stripMarkdown(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*/g, "")
+    .replace(/`/g, "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .trim();
+}
+
+/** Splits text on **…** markers into segments, flagging the bold ones (for the on-screen render). */
+export function boldSegments(text: string): { text: string; bold: boolean }[] {
+  const out: { text: string; bold: boolean }[] = [];
+  (text || "").split(/\*\*/).forEach((p, i) => {
+    if (p) out.push({ text: p, bold: i % 2 === 1 });
+  });
+  return out;
+}
+
+/**
+ * Detects an inline numbered enumeration such as "... : (1) A ; (2) B ; (3) C"
+ * and returns the intro + list items; returns null when there is none.
  */
 export function parseEnumeration(text: string): { intro: string; items: string[] } | null {
   if (!text) return null;

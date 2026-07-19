@@ -20,8 +20,8 @@ const COLS = [
   { baseX: 750, cx: 690 },
 ];
 
-const NAVY = "#1B4F72";
-const BLUE = "#2E86C1";
+const NAVY = "#F06020"; // EmbraceIA orange (pills + head)
+const BLUE = "#F2884E"; // lighter orange (bones)
 const INK = "#cbd5e1"; // slate-300 (readable on dark bg)
 const MUTED = "#94a3b8";
 
