@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // PWA runtime caching is handled by the custom service worker (public/sw.js)
 
+  // @resvg/resvg-js is a native Node addon (.node binding) used by the shared
+  // fishbone image renderer; it cannot be bundled into ESM chunks, so keep it
+  // external and load it at runtime on the server.
+  serverExternalPackages: ["@resvg/resvg-js"],
+
   images: {
     formats: ["image/avif", "image/webp"],
   },

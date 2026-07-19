@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/supabase/server";
 import { canManageProject, getProjectDetail } from "@/lib/scoping/service";
 import { getStoredSynthesis } from "@/lib/scoping/synthesis";
-import { FishboneDiagram } from "@/components/scoping/FishboneDiagram";
+import { fishbonePngDataUri } from "@/lib/scoping/fishbone-image";
 import { Prose } from "@/components/scoping/Prose";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +64,12 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
       <h2 className="mt-10 text-xl font-bold">Ishikawa 6M</h2>
       <p className="mt-1 text-sm text-muted-foreground">{ishikawa.problem}</p>
       <div className="mt-3">
-        <FishboneDiagram causes={ishikawa.causes} problem={ishikawa.problem} rootCause={ishikawa.rootCause} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={fishbonePngDataUri(ishikawa)}
+          alt="Diagramme d'Ishikawa 6M"
+          className="w-full rounded-xl border border-border/60 bg-white"
+        />
       </div>
       <details className="mt-3">
         <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">Détail des causes par catégorie</summary>

@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { parseEnumeration, stripMarkdown, toPdfSafe } from "@/lib/scoping/format";
 import { BRAND, EMBRACEIA_LOGO_DATAURI } from "@/lib/scoping/brand";
+import { fishbonePngDataUri } from "@/lib/scoping/fishbone-image";
 import type { ScopingSynthesis } from "@/lib/ai/engine";
 
 const M6: Record<string, string> = {
@@ -182,131 +183,20 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   y += 4;
 
   // --- Ishikawa fishbone diagram (own landscape page) ---
-  // Canonical 6M fishbone. The page is split into three non-overlapping zones:
-  //   Top band    (y 20 -> 70):        title only
-  //   Middle band (y ~80 -> lh-90):    the diagram (spine, head, ribs, causes)
-  //   Bottom band (y lh-80 -> lh-30):  root-cause caption only
-  const drawFishbone = () => {
+  // The finished 6M fishbone is rendered by @/lib/scoping/fishbone-image and
+  // embedded here as a single PNG (aspect ratio 1420 x 900).
+  function drawFishbone() {
     doc.addPage("a4", "landscape");
     const lw = doc.internal.pageSize.getWidth();
     const lh = doc.internal.pageSize.getHeight();
-    const spineY = lh / 2;
-
-    // --- Top zone: title top-left only ---
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(...rgb(BRAND.orange));
-    doc.text("Ishikawa 6M", 40, 40);
-
-    // --- Middle zone: spine ---
-    const spineStartX = 45;
-    const spineEndX = lw - 200; // stops just before the effect head
-    doc.setDrawColor(...rgb(BRAND.ink));
-    doc.setLineWidth(2);
-    doc.line(spineStartX, spineY, spineEndX, spineY);
-    // Arrowhead at the right end, pointing into the effect head
-    doc.line(spineEndX, spineY, spineEndX - 12, spineY - 7);
-    doc.line(spineEndX, spineY, spineEndX - 12, spineY + 7);
-
-    // Effect head (the problem)
-    doc.setFillColor(...rgb(BRAND.orange));
-    doc.roundedRect(lw - 195, spineY - 42, 160, 84, 6, 6, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text("PROBLEME", lw - 187, spineY - 26);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    const headLines = doc.splitTextToSize(clean(synth.ishikawa.problem) || "-", 148);
-    let hy = spineY - 12;
-    for (const line of headLines.slice(0, 5)) {
-      doc.text(line, lw - 187, hy);
-      hy += 9;
-    }
-
-    // --- Middle zone: 6 category ribs ---
-    // TOP row = man / method / measurement ; BOTTOM row = machine / material / environment
-    const topKeys = ["man", "method", "measurement"];
-    const bottomKeys = ["machine", "material", "environment"];
-    const xCentres = [190, 400, 610];
-    const boxW = 130;
-    const boxH = 20;
-    const yTop = 95; // top edge of the top-row label boxes
-    const yBot = lh - 100; // top edge of the bottom-row label boxes
-    const attachDX = 70; // spine attachment offset -> keeps each row's ribs parallel
-
-    const drawCategory = (key: string, xc: number, top: boolean) => {
-      const boxY = top ? yTop : yBot;
-
-      // Category label box
-      doc.setFillColor(...rgb(BRAND.orange));
-      doc.roundedRect(xc - boxW / 2, boxY, boxW, boxH, 4, 4, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      const label = M6[key];
-      doc.text(label, xc - doc.getTextWidth(label) / 2, boxY + boxH / 2 + 3);
-
-      // Rib: single diagonal from the box's inner edge to the spine attachment.
-      // Start point is identical offset for every box in a row, so ribs stay parallel.
-      doc.setDrawColor(...rgb(BRAND.orange));
-      doc.setLineWidth(1.5);
-      const startY = top ? boxY + boxH : boxY; // inner-bottom (top) / inner-top (bottom)
-      doc.line(xc, startY, xc + attachDX, spineY);
-
-      // Causes: up to 4, left-aligned inside the wedge (x = xc-95 .. xc+35),
-      // stacked so the block sits between the box and the spine (no overlap).
-      const list = (causes[key] ?? []).slice(0, 4);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...rgb(BRAND.ink));
-      const textX = xc - 95;
-      const lineGap = 9;
-      const rows: string[] = [];
-      for (const cause of list) {
-        const truncated = cause.length > 70 ? cause.slice(0, 69) + "..." : cause;
-        const wrapped = doc.splitTextToSize(clean(truncated), 120).slice(0, 2);
-        wrapped.forEach((ln: string, i: number) => rows.push((i === 0 ? "- " : "  ") + ln));
-      }
-      const blockH = rows.length * lineGap;
-      // Top row: start just below the box, grow downward toward the spine.
-      // Bottom row: end just above the box, so the block sits above it (toward the spine).
-      let cy = top ? boxY + boxH + 12 : boxY - 12 - blockH + lineGap;
-      for (const r of rows) {
-        doc.text(r, textX, cy);
-        cy += lineGap;
-      }
-    };
-
-    topKeys.forEach((k, i) => drawCategory(k, xCentres[i], true));
-    bottomKeys.forEach((k, i) => drawCategory(k, xCentres[i], false));
-
-    // --- Bottom band: root-cause caption only, with a thin orange separator above ---
-    const bandY = lh - 80;
-    doc.setDrawColor(...rgb(BRAND.orange));
-    doc.setLineWidth(0.75);
-    doc.line(40, bandY, lw - 40, bandY);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...rgb(BRAND.ink));
-    const rcLabel = "Cause racine : ";
-    doc.text(rcLabel, 40, bandY + 20);
-    const rcLabelW = doc.getTextWidth(rcLabel);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...rgb(BRAND.grey));
-    const rcLines = doc.splitTextToSize(clean(synth.ishikawa.rootCause) || "-", lw - 80 - rcLabelW);
-    let capY = bandY + 20;
-    rcLines.forEach((line: string, i: number) => {
-      doc.text(line, i === 0 ? 40 + rcLabelW : 40, capY);
-      capY += 11;
-    });
-
-    // Back to portrait for the rest of the document
+    const m = 40;
+    const imgW = lw - 2 * m;
+    const imgH = imgW * (900 / 1420);
+    const imgY = Math.max(30, (lh - imgH) / 2);
+    doc.addImage(fishbonePngDataUri(synth.ishikawa), "PNG", m, imgY, imgW, imgH);
     doc.addPage("a4", "portrait");
-    y = margin;
-    doc.setTextColor(...rgb(BRAND.ink));
-  };
+    y = margin; // continue the document in portrait
+  }
   drawFishbone();
 
   // --- Cahier des charges ---

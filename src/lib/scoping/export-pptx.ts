@@ -2,16 +2,7 @@ import pptxgen from "pptxgenjs";
 import type { ScopingSynthesis } from "@/lib/ai/engine";
 import { parseEnumeration, stripMarkdown } from "@/lib/scoping/format";
 import { BRAND, EMBRACEIA_LOGO_DATAURI } from "@/lib/scoping/brand";
-
-// FR labels for the 6M Ishikawa categories.
-const M6: Record<string, string> = {
-  man: "Main d'œuvre",
-  machine: "Machines",
-  method: "Méthodes",
-  material: "Matières",
-  measurement: "Mesure",
-  environment: "Milieu",
-};
+import { fishbonePngDataUri } from "@/lib/scoping/fishbone-image";
 
 const trunc = (s: string, n: number): string => {
   const t = (s || "").trim();
@@ -282,65 +273,17 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
   {
     const s = pptx.addSlide();
     header(s, "Analyse des causes — Ishikawa 6M", "🐟");
-
-    const SPINE_Y = 3.9;
-
-    // Horizontal spine, arrow pointing right into the PROBLÈME head.
-    s.addShape("line", { x: 0.4, y: SPINE_Y, w: 9.4, h: 0, line: { color: BRAND.ink, width: 2.5, endArrowType: "triangle" } });
-
-    // Effect head (right).
-    s.addShape("roundRect", { x: 9.9, y: 3.0, w: 3.1, h: 1.7, fill: { color: BRAND.orange }, line: { color: BRAND.orangeDark, width: 1 } });
-    s.addText(
-      [
-        { text: "PROBLÈME", options: { bold: true, fontSize: 12, color: BRAND.white, breakLine: true, paraSpaceAfter: 4 } },
-        { text: stripMarkdown(trunc(synth.ishikawa.problem, 150)), options: { fontSize: 9, color: BRAND.orangeLight } },
-      ],
-      { x: 10.05, y: 3.1, w: 2.8, h: 1.5, valign: "top", align: "left", wrap: true, fit: "shrink" },
-    );
-
-    const centers = [2.3, 4.8, 7.3];
-    const causes = synth.ishikawa.causes as Record<string, string[]>;
-
-    const drawCategory = (key: string, cx: number, side: "top" | "bottom") => {
-      const list = (causes[key] ?? []).slice(0, 4);
-      const runs: Runs = list.length
-        ? list.map((cause) => ({
-            text: stripMarkdown(trunc(cause, 75)),
-            options: { bullet: { characterCode: "2022", indent: 10 }, color: BRAND.ink, breakLine: true, paraSpaceAfter: 2 },
-          }))
-        : [{ text: "—", options: { color: BRAND.grey } }];
-
-      if (side === "top") {
-        // ONE diagonal bone: pill inner edge (upper) -> spine (lower-right). All top bones share the same vector => parallel.
-        s.addShape("line", { x: cx + 0.2, y: 1.3, w: 0.75, h: SPINE_Y - 1.3, line: { color: BRAND.orange, width: 1.75 } });
-        s.addShape("roundRect", { x: cx - 0.7, y: 0.8, w: 1.4, h: 0.45, fill: { color: BRAND.orange } });
-        s.addText(M6[key], { x: cx - 0.7, y: 0.8, w: 1.4, h: 0.45, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle" });
-        // Cause box sits on the OUTER (left) side of the bone, just under the pill; text never crosses the rib.
-        s.addText(runs, { x: cx - 2.35, y: 1.32, w: 2.2, h: 2.3, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
-      } else {
-        // ONE diagonal bone: spine (upper-right) -> pill inner edge (lower). flipH keeps all bottom bones parallel.
-        s.addShape("line", { x: cx + 0.2, y: SPINE_Y, w: 0.75, h: 6.28 - SPINE_Y, flipH: true, line: { color: BRAND.orange, width: 1.75 } });
-        s.addShape("roundRect", { x: cx - 0.7, y: 6.28, w: 1.4, h: 0.45, fill: { color: BRAND.orange } });
-        s.addText(M6[key], { x: cx - 0.7, y: 6.28, w: 1.4, h: 0.45, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle" });
-        // Cause box sits on the OUTER (left) side of the bone, just above the pill; text never crosses the rib.
-        s.addText(runs, { x: cx - 2.35, y: 3.95, w: 2.2, h: 2.3, fontSize: 8, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
-      }
-    };
-
-    (["man", "method", "measurement"] as const).forEach((k, i) => drawCategory(k, centers[i], "top"));
-    (["machine", "material", "environment"] as const).forEach((k, i) => drawCategory(k, centers[i], "bottom"));
-
-    s.addText(`Cause racine : ${stripMarkdown(trunc(synth.ishikawa.rootCause, 160))}`, {
-      x: 0.4,
-      y: 6.98,
-      w: PW - 0.8,
-      h: 0.35,
-      fontSize: 11,
-      italic: true,
-      color: BRAND.grey,
-      valign: "middle",
-      wrap: true,
+    // The finished 6M fishbone (spine, ribs, pills, cause boxes, PROBLÈME head,
+    // root-cause caption) is rendered by @/lib/scoping/fishbone-image and embedded
+    // as a single centered PNG (aspect ratio 1420 x 900).
+    s.addImage({
+      data: fishbonePngDataUri(synth.ishikawa),
+      x: 2.06,
+      y: 1.25,
+      w: 9.2,
+      h: 9.2 * (900 / 1420), // ≈ 5.83in, keeps aspect
     });
+    footer(s);
   }
 
   const c = synth.cahierDesCharges;
