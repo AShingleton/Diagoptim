@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Activity, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -72,10 +73,20 @@ export default function LoginPage() {
 
   async function onSubmit(data: LoginValues) {
     setServerError(null);
-    console.log("Login submit:", data);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    router.push(`/${locale}/dashboard`);
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    );
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+    if (error) {
+      setServerError(error.message);
+      return;
+    }
+    router.push(`/${locale}/scoping`);
+    router.refresh();
   }
 
   return (
