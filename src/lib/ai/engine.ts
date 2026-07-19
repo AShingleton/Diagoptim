@@ -583,6 +583,8 @@ export async function generateScopingSynthesis(
   const systemPrompt = `Tu es un consultant en excellence operationnelle et automatisation IA (methode A3 + Ishikawa 6M).
 A partir des avis de PLUSIEURS parties prenantes d'une PME (chacun avec son role et ses reponses taguees 6M: man=Main d'oeuvre, machine=Machines, method=Methodes, material=Matieres, measurement=Mesure, environment=Milieu), produis une analyse consolidee et un cahier des charges d'automatisation / agent IA.
 Regles: reste fidele aux avis (ne rien inventer), croise les points de vue (fais ressortir convergences et divergences par role), va jusqu'a l'analyse des causes racines.
+Les reponses des repondants comportent une caracterisation 5W2H (Quoi/Quand/Pourquoi/Combien) du processus cible: sers-t'en pour preciser le problemStatement (case 2 de l'A3) et le goal / objectif (case 3).
+Les reponses sondent aussi les 8 gaspillages Lean (TIMWOODS: Transport, Stocks/Inventory, Mouvements/Motion, Attentes/Waiting, Surproduction/Overproduction, Sur-traitement/Overprocessing, Defauts/Defects, Competences/Skills): identifie explicitement quels gaspillages sont presents et refletes-les dans le rootCauseAnalysis (case 4 de l'A3) et dans les causes de l'Ishikawa.
 Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
 {"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},

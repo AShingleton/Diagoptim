@@ -3,9 +3,9 @@ import { QUESTION_TREE } from '@/lib/diagnostic/decision-tree';
 
 describe('scoping question set', () => {
   const qs = (QUESTION_TREE as Record<string, Array<{ id: string; phase: string; category: string; scoringWeight: number }>>).scoping;
-  it('has 12-16 questions all on the scoping phase', () => {
-    expect(qs.length).toBeGreaterThanOrEqual(12);
-    expect(qs.length).toBeLessThanOrEqual(16);
+  it('has 25-32 questions all on the scoping phase', () => {
+    expect(qs.length).toBeGreaterThanOrEqual(25);
+    expect(qs.length).toBeLessThanOrEqual(32);
     expect(qs.every((q) => q.phase === 'scoping')).toBe(true);
     expect(qs.every((q) => q.scoringWeight === 0)).toBe(true);
   });
