@@ -19,7 +19,7 @@
 // Phase 5: Recommendations + roadmap generation
 // ============================================================================
 
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, DiagnosticPhase } from '@prisma/client';
 import {
   type QuestionNode,
   type QuestionContext,
@@ -179,7 +179,10 @@ export class QuestionEngine {
     if (phase !== context.currentPhase) {
       await this.prisma.diagnostic.update({
         where: { id: diagnosticId },
-        data: { currentPhase: phase },
+        // 'scoping' is a phase-without-questions (like 'documents'); persist it
+        // as a normal phase. Cast bridges the new union value until the Prisma
+        // enum migration lands in a later task.
+        data: { currentPhase: phase as DiagnosticPhase },
       });
     }
 
@@ -296,7 +299,8 @@ export class QuestionEngine {
     if (phaseChanged) {
       await this.prisma.diagnostic.update({
         where: { id: diagnosticId },
-        data: { currentPhase: newPhase },
+        // See note above: 'scoping' persisted like any phase-without-questions.
+        data: { currentPhase: newPhase as DiagnosticPhase },
       });
     }
 

@@ -15,6 +15,7 @@ export type DiagnosticPhaseType =
   | 'wastes'
   | 'deepening'
   | 'strategy'
+  | 'scoping'
   | 'recommendations';
 
 /** Subscription tiers matching Prisma Plan enum */
@@ -1036,6 +1037,7 @@ export const QUESTION_TREE: Record<DiagnosticPhaseType, QuestionNode[]> = {
   wastes: ALL_WASTE_QUESTIONS,
   deepening: DEEPENING_QUESTIONS,
   strategy: STRATEGY_QUESTIONS,
+  scoping: [], // Scoping phase questions added in a later task
   recommendations: [], // Recommendations phase generates output, no questions
 };
 
@@ -1058,6 +1060,8 @@ export function getPhasesForType(diagnosticType: string): DiagnosticPhaseType[] 
       return ['framing', 'profile', 'documents', 'wastes', 'deepening', 'recommendations'];
     case 'strategy':
       return ['framing', 'profile', 'documents', 'strategy', 'recommendations'];
+    case 'automation_scoping':
+      return ['framing', 'profile', 'scoping', 'recommendations'];
     case 'full':
     default:
       return ['framing', 'profile', 'documents', 'wastes', 'deepening', 'strategy', 'recommendations'];

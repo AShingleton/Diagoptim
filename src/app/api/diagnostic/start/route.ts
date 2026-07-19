@@ -5,12 +5,13 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { DiagnosticType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';
 
 const startDiagnosticSchema = z.object({
   companyId: z.string().uuid(),
-  type: z.enum(['full', 'waste', 'strategy', 'quick']),
+  type: z.enum(['full', 'waste', 'strategy', 'quick', 'automation_scoping']),
   targetAmount: z.number().positive(),
   targetType: z.enum(['revenue_increase', 'cost_reduction']),
   targetTimeMonths: z.number().int().min(1).max(60),
@@ -52,7 +53,9 @@ export async function POST(request: NextRequest) {
     const diagnostic = await prisma.diagnostic.create({
       data: {
         companyId,
-        type,
+        // Cast bridges the new 'automation_scoping' value until the Prisma
+        // DiagnosticType enum migration lands in a later task.
+        type: type as DiagnosticType,
         targetAmount,
         targetType,
         targetTimeMonths,

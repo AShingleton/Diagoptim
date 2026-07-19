@@ -50,6 +50,7 @@ enum DiagnosticType {
   waste
   strategy
   quick
+  automation_scoping
 }
 
 enum DiagnosticStatus {
@@ -77,6 +78,7 @@ enum DiagnosticPhase {
   deepening
   strategy
   recommendations
+  scoping
 }
 
 enum InsightType {
