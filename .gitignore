@@ -51,3 +51,4 @@ prisma/generated/
 
 # dist
 dist/
+.env*

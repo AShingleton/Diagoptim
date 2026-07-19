@@ -500,3 +500,45 @@ Reponds STRICTEMENT en JSON: {"followUp": "..."} ou {"followUp": null}. Rien d'a
   const parsed = parseJSON<{ followUp: string | null }>(raw);
   return { followUp: parsed.followUp ?? null };
 }
+
+// ---------------------------------------------------------------------------
+// Per-respondent viewpoint summary generator
+// ---------------------------------------------------------------------------
+
+export interface RespondentAnswer {
+  questionTextFr: string;
+  category: string; // 6M tag
+  answer: string;
+}
+
+export interface RespondentSummary {
+  summary: string;                                   // 2-4 sentences, French
+  painPoints: Array<{ text: string; category: string }>; // grievances tagged by 6M
+}
+
+/**
+ * Condenses one stakeholder's scoping answers into a short French viewpoint
+ * summary plus a list of pain points tagged by 6M category. Feeds the
+ * consolidated Ishikawa/A3 (SP4).
+ */
+export async function summarizeRespondentViewpoint(
+  answers: RespondentAnswer[],
+  sector?: string,
+): Promise<RespondentSummary> {
+  const systemPrompt = `Tu es un consultant qui cadre un projet d'automatisation et d'agent IA pour une PME.
+A partir des reponses d'UN collaborateur a un questionnaire structure par les 6M (Main d'oeuvre, Machines, Methodes, Matieres, Mesure, Milieu), produis:
+- "summary": 2 a 4 phrases en francais resumant son point de vue et ses principales doleances;
+- "painPoints": la liste de ses points de douleur concrets, chacun avec sa categorie 6M (man|machine|method|material|measurement|environment).
+Reste fidele a ses reponses, ne rien inventer. Ton factuel.
+Reponds STRICTEMENT en JSON: {"summary": "...", "painPoints": [{"text": "...", "category": "..."}]}.`;
+  const userMessage = JSON.stringify({ secteur: sector ?? null, reponses: answers });
+  const raw = await scopingAiDeps.chat(systemPrompt, [{ role: "user", content: userMessage }], {
+    temperature: 0.3,
+    maxTokens: 1024,
+  });
+  const parsed = parseJSON<RespondentSummary>(raw);
+  return {
+    summary: parsed.summary ?? "",
+    painPoints: Array.isArray(parsed.painPoints) ? parsed.painPoints : [],
+  };
+}
