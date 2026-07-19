@@ -5,9 +5,11 @@ import { getSessionUser } from "@/lib/supabase/server";
 import { canManageProject, getProjectDetail } from "@/lib/scoping/service";
 import { AddStakeholderForm } from "./AddStakeholderForm";
 import { InviteButton } from "./InviteButton";
-import { addStakeholderAction, inviteStakeholderAction } from "./actions";
+import { SynthesisButton } from "./SynthesisButton";
+import { addStakeholderAction, inviteStakeholderAction, generateSynthesisAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function ScopingProjectPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
@@ -35,6 +37,19 @@ export default async function ScopingProjectPage({ params }: { params: Promise<{
           <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
         </div>
         {ready && <p className="mt-2 text-sm font-medium text-green-600">Prêt pour la synthèse (Ishikawa 6M + cahier des charges) — à venir.</p>}
+        <div className="mt-3 flex items-center gap-3">
+          {project.completion.completed >= 1 && (
+            <SynthesisButton
+              action={generateSynthesisAction.bind(null, id, locale)}
+              label={project.status === "synthesized" ? "Régénérer la synthèse" : "Générer la synthèse (Ishikawa + cahier des charges)"}
+            />
+          )}
+          {project.status === "synthesized" && (
+            <Link href={`/${locale}/scoping/${id}/synthese`} className="text-sm text-primary hover:underline">
+              Voir la synthèse
+            </Link>
+          )}
+        </div>
       </div>
 
       <h2 className="mt-8 text-lg font-semibold">Ajouter une partie prenante</h2>

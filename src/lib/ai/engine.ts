@@ -542,3 +542,48 @@ Reponds STRICTEMENT en JSON: {"summary": "...", "painPoints": [{"text": "...", "
     painPoints: Array.isArray(parsed.painPoints) ? parsed.painPoints : [],
   };
 }
+
+// ---------------------------------------------------------------------------
+// Consolidated scoping synthesis (A3 boxes 1-4 + Ishikawa 6M + cahier des charges)
+// ---------------------------------------------------------------------------
+
+export interface RespondentBundle {
+  role: string;
+  answers: Array<{ question: string; category: string; answer: string }>;
+}
+export interface ScopingSynthesis {
+  a3: { background: string; problemStatement: string; goal: string; rootCauseAnalysis: string };
+  ishikawa: {
+    problem: string;
+    causes: { man: string[]; machine: string[]; method: string[]; material: string[]; measurement: string[]; environment: string[] };
+    rootCause: string;
+  };
+  cahierDesCharges: {
+    contexte: string;
+    perimetre: string;
+    tachesAAutomatiser: Array<{ tache: string; frequence: string; priorite: string }>;
+    casUsageAgentIA: Array<{ processus: string; usage: string; causesTraitees: string }>;
+    donneesEtIntegrations: string;
+    contraintesEtRisques: string;
+    pointsDeVueParRole: Array<{ role: string; synthese: string }>;
+    priorisation: string;
+    criteresDeRecette: string;
+  };
+}
+
+export async function generateScopingSynthesis(
+  projectName: string,
+  companyName: string,
+  respondents: RespondentBundle[],
+): Promise<ScopingSynthesis> {
+  const systemPrompt = `Tu es un consultant en excellence operationnelle et automatisation IA (methode A3 + Ishikawa 6M).
+A partir des avis de PLUSIEURS parties prenantes d'une PME (chacun avec son role et ses reponses taguees 6M: man=Main d'oeuvre, machine=Machines, method=Methodes, material=Matieres, measurement=Mesure, environment=Milieu), produis une analyse consolidee et un cahier des charges d'automatisation / agent IA.
+Regles: reste fidele aux avis (ne rien inventer), croise les points de vue (fais ressortir convergences et divergences par role), va jusqu'a l'analyse des causes racines.
+Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
+{"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
+ "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
+ "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."}}`;
+  const userMessage = JSON.stringify({ projet: projectName, entreprise: companyName, parties_prenantes: respondents });
+  const raw = await scopingAiDeps.chat(systemPrompt, [{ role: "user", content: userMessage }], { temperature: 0.3, maxTokens: 8192 });
+  return parseJSON<ScopingSynthesis>(raw);
+}

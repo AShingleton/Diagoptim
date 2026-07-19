@@ -2,10 +2,12 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/supabase/server";
 import { canManageProject, addStakeholder } from "@/lib/scoping/service";
 import { inviteStakeholder } from "@/lib/scoping/invite";
+import { runSynthesis } from "@/lib/scoping/synthesis";
 import { sendEmail } from "@/lib/notifications/email";
 
 async function assertManager(projectId: string): Promise<void> {
@@ -24,6 +26,14 @@ export async function addStakeholderAction(projectId: string, formData: FormData
   await addStakeholder(prisma, { projectId, fullName, email, roleLabel, hierarchyParentId: hp || null });
   revalidatePath(`/fr/scoping/${projectId}`);
   revalidatePath(`/en/scoping/${projectId}`);
+}
+
+export async function generateSynthesisAction(projectId: string, locale: string): Promise<void> {
+  await assertManager(projectId);
+  await runSynthesis(prisma, projectId);
+  revalidatePath(`/${locale}/scoping/${projectId}`);
+  revalidatePath(`/${locale}/scoping/${projectId}/synthese`);
+  redirect(`/${locale}/scoping/${projectId}/synthese`);
 }
 
 async function createOrGetUser(email: string): Promise<{ id: string; tempPassword: string | null }> {
