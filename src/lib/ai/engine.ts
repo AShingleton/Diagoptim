@@ -135,6 +135,8 @@ export interface ChatOptions {
   temperature?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  /** Override the model for this call (e.g. a faster model for long generations). */
+  model?: string;
 }
 
 /** Tracks token usage for billing / analytics. */
@@ -213,7 +215,7 @@ function recordUsage(
 async function callWithRetry(
   systemPrompt: string,
   messages: Anthropic.MessageParam[],
-  options: { temperature: number; maxTokens: number; stopSequences?: string[] }
+  options: { temperature: number; maxTokens: number; stopSequences?: string[]; model?: string }
 ): Promise<Anthropic.Message> {
   const client = createClient();
   let lastError: unknown;
@@ -221,7 +223,7 @@ async function callWithRetry(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await client.messages.create({
-        model: MODEL,
+        model: options.model ?? MODEL,
         max_tokens: options.maxTokens,
         temperature: options.temperature,
         system: systemPrompt,
@@ -442,6 +444,7 @@ export async function chat(
     temperature,
     maxTokens,
     stopSequences,
+    model: options?.model,
   });
 
   return extractText(response);
@@ -585,6 +588,12 @@ Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
  "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."}}`;
   const userMessage = JSON.stringify({ projet: projectName, entreprise: companyName, parties_prenantes: respondents });
-  const raw = await scopingAiDeps.chat(systemPrompt, [{ role: "user", content: userMessage }], { temperature: 0.3, maxTokens: 8192 });
+  // Haiku 4.5: this is a long structured generation (~55s on Sonnet -> Vercel timeout);
+  // Haiku keeps it ~20s, safely within the function budget.
+  const raw = await scopingAiDeps.chat(systemPrompt, [{ role: "user", content: userMessage }], {
+    temperature: 0.3,
+    maxTokens: 8192,
+    model: "claude-haiku-4-5-20251001",
+  });
   return parseJSON<ScopingSynthesis>(raw);
 }
