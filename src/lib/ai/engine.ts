@@ -264,7 +264,7 @@ function extractText(response: Anthropic.Message): string {
 /**
  * Parses a JSON string from the AI response, stripping markdown fences if present.
  */
-function parseJSON<T>(raw: string): T {
+export function parseJSON<T>(raw: string): T {
   const cleaned = raw
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
@@ -444,4 +444,59 @@ export async function chat(
   });
 
   return extractText(response);
+}
+
+// ---------------------------------------------------------------------------
+// Adaptive scoping follow-up generator
+// ---------------------------------------------------------------------------
+
+/**
+ * Indirection wrapper around {@link chat}.
+ *
+ * `generateScopingFollowUp` calls the AI through `scopingAiDeps.chat` rather than
+ * the bare `chat` binding so unit tests can stub the call
+ * (`vi.spyOn(scopingAiDeps, "chat")`) and stay fully hermetic — no real network
+ * request is ever made in tests.
+ */
+export const scopingAiDeps = { chat };
+
+export interface ScopingFollowUpInput {
+  questionTextFr: string;
+  category: string; // 6M tag: man|machine|method|material|measurement|environment|framing
+  answer: string;
+  sector?: string;
+}
+
+/**
+ * Given a scoping answer, returns at most ONE short French follow-up question to
+ * dig deeper (5-Whys style) when the answer opens an automation lead or a
+ * grievance worth exploring — otherwise null.
+ */
+export async function generateScopingFollowUp(
+  input: ScopingFollowUpInput,
+): Promise<{ followUp: string | null }> {
+  const systemPrompt = `Tu es un consultant qui cadre un projet d'automatisation et d'agent IA pour une PME.
+A partir de la question posee et de la reponse d'un collaborateur, genere AU PLUS UNE question de relance:
+- courte, concrete, en francais, ton conversationnel, sans jargon Lean;
+- pour creuser une piste d'automatisation ou une doleance (technique des 5 Pourquoi si pertinent);
+- UNIQUEMENT si la reponse ouvre vraiment une piste. Si la reponse est vague, vide ou deja complete, renvoie null.
+Reponds STRICTEMENT en JSON: {"followUp": "..."} ou {"followUp": null}. Rien d'autre.`;
+
+  const userMessage = JSON.stringify({
+    question: input.questionTextFr,
+    categorie6M: input.category,
+    reponse: input.answer,
+    secteur: input.sector ?? null,
+  });
+
+  const raw = await scopingAiDeps.chat(
+    systemPrompt,
+    [{ role: "user", content: userMessage }],
+    {
+      temperature: 0.4,
+      maxTokens: 256,
+    },
+  );
+  const parsed = parseJSON<{ followUp: string | null }>(raw);
+  return { followUp: parsed.followUp ?? null };
 }
