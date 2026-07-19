@@ -4,7 +4,7 @@ import { getPhasesForType, QUESTION_TREE } from '@/lib/diagnostic/decision-tree'
 describe('automation_scoping diagnostic type', () => {
   it('returns the scoping phase sequence', () => {
     expect(getPhasesForType('automation_scoping')).toEqual([
-      'framing', 'profile', 'scoping', 'recommendations',
+      'scoping', 'recommendations',
     ]);
   });
 

@@ -38,7 +38,7 @@ export async function inviteStakeholder(deps: InviteDeps, stakeholderId: string)
     data: { respondentUserId: user.id, diagnosticId: diagnostic.id, inviteStatus: 'invited' },
   });
 
-  const link = `${deps.appUrl}/fr/diagnostic/${diagnostic.id}`;
+  const link = `${deps.appUrl}/fr/scoping/respond/${diagnostic.id}`;
   const creds = user.tempPassword
     ? `<p>Identifiants : <b>${stakeholder.email}</b> / mot de passe : <b>${user.tempPassword}</b></p>`
     : '';

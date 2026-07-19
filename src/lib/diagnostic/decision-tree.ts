@@ -1222,7 +1222,9 @@ export function getPhasesForType(diagnosticType: string): DiagnosticPhaseType[] 
     case 'strategy':
       return ['framing', 'profile', 'documents', 'strategy', 'recommendations'];
     case 'automation_scoping':
-      return ['framing', 'profile', 'scoping', 'recommendations'];
+      // Stakeholder respondents only run the 6M scoping dialogue — no financial
+      // framing or company profiling (those belong to the project, not each person).
+      return ['scoping', 'recommendations'];
     case 'full':
     default:
       return ['framing', 'profile', 'documents', 'wastes', 'deepening', 'strategy', 'recommendations'];

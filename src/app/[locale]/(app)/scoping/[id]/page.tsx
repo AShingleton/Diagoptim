@@ -57,7 +57,17 @@ export default async function ScopingProjectPage({ params }: { params: Promise<{
                   {` · ${s.diagnostic?.status === "completed" ? "avis recueilli" : s.inviteStatus}`}
                 </div>
               </div>
-              <InviteButton action={inviteStakeholderAction.bind(null, id, s.id)} status={s.inviteStatus} />
+              <div className="flex items-center gap-3">
+                {s.diagnosticId && (
+                  <Link
+                    href={`/${locale}/scoping/respond/${s.diagnosticId}`}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Ouvrir le dialogue
+                  </Link>
+                )}
+                <InviteButton action={inviteStakeholderAction.bind(null, id, s.id)} status={s.inviteStatus} />
+              </div>
             </li>
           ))}
         </ul>
