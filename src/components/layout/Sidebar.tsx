@@ -8,6 +8,7 @@ import {
   Activity,
   LayoutDashboard,
   ClipboardCheck,
+  Users,
   Map,
   Wrench,
   GraduationCap,
@@ -62,6 +63,11 @@ export function Sidebar() {
         labelKey: "nav.diagnostic",
         href: `/${locale}/dashboard/diagnostic`,
         icon: ClipboardCheck,
+      },
+      {
+        labelKey: "nav.scoping",
+        href: `/${locale}/scoping`,
+        icon: Users,
       },
       {
         labelKey: "nav.roadmap",
