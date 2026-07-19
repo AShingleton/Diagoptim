@@ -24,7 +24,7 @@ export default async function ScopingPage({
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="text-2xl font-bold">Cadrages automatisation</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Creez un projet de cadrage, definissez le panel de parties prenantes, et recueillez leurs avis (dialogue 6M) pour batir le cahier des charges.
+        Créez un projet de cadrage, définissez le panel de parties prenantes, et recueillez leurs avis (dialogue 6M) pour bâtir le cahier des charges.
       </p>
 
       <div className="mt-6">
@@ -34,7 +34,7 @@ export default async function ScopingPage({
       <div className="mt-8">
         <h2 className="text-lg font-semibold">Vos projets ({projects.length})</h2>
         {projects.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aucun projet pour l'instant. Creez-en un ci-dessus.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Aucun projet pour l'instant. Créez-en un ci-dessus.</p>
         ) : (
           <ul className="mt-3 grid gap-2">
             {projects.map((p: { id: string; name: string; status: string; requiredRespondents: number; _count?: { stakeholders: number } }) => (

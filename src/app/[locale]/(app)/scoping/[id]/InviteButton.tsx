@@ -18,7 +18,7 @@ export function InviteButton({
       disabled={pending || already}
       onClick={() => start(() => { void action(); })}
     >
-      {pending ? "Envoi..." : already ? "Invite" : "Inviter"}
+      {pending ? "Envoi..." : already ? "Invité" : "Inviter"}
     </Button>
   );
 }

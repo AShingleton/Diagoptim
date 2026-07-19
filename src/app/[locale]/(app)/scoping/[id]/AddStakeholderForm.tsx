@@ -16,10 +16,10 @@ export function AddStakeholderForm({
     <form action={(fd) => start(() => { void action(fd); })} className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 sm:grid-cols-2">
       <input name="fullName" required placeholder="Nom complet" className={inputCls} />
       <input name="email" type="email" required placeholder="Email" className={inputCls} />
-      <input name="roleLabel" required placeholder="Role (ex: Vendeuse, Gerant)" className={inputCls} />
+      <input name="roleLabel" required placeholder="Rôle (ex : Vendeuse, Gérant)" className={inputCls} />
       <select name="hierarchyParentId" defaultValue="" className={inputCls}>
-        <option value="">Rattachement hierarchique (optionnel)</option>
-        {parents.map((p) => (<option key={p.id} value={p.id}>Sous la responsabilite de {p.fullName}</option>))}
+        <option value="">Rattachement hiérarchique (optionnel)</option>
+        {parents.map((p) => (<option key={p.id} value={p.id}>Sous la responsabilité de {p.fullName}</option>))}
       </select>
       <Button type="submit" disabled={pending} className="sm:col-span-2 justify-self-start">
         {pending ? "Ajout..." : "Ajouter au panel"}

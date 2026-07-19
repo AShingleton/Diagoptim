@@ -30,7 +30,7 @@ export function NewProjectForm({
           <label className="text-sm font-medium">Qui pilote</label>
           <select name="ownerType" defaultValue="consultant" className={inputCls}>
             <option value="consultant">Moi (consultant)</option>
-            <option value="client_lead">Un referent client</option>
+            <option value="client_lead">Un référent client</option>
           </select>
         </div>
         <div className="grid flex-1 gap-1">
@@ -39,7 +39,7 @@ export function NewProjectForm({
         </div>
       </div>
       <Button type="submit" disabled={pending} className="justify-self-start">
-        {pending ? "Creation..." : "Creer le cadrage"}
+        {pending ? "Création..." : "Créer le cadrage"}
       </Button>
     </form>
   );
