@@ -217,6 +217,8 @@ model User {
   teamMemberships       TeamMember[]
   auditLogs             AuditLog[]
   knowledgeBases        KnowledgeBase[]
+  scopingProjectsCreated ScopingProject[]     @relation("ScopingProjectCreatedBy")
+  stakeholderRoles      ScopingStakeholder[]  @relation("StakeholderRespondent")
 
   @@index([email])
   @@index([role])
@@ -245,6 +247,7 @@ model Company {
   documents         Document[]
   consultantClients ConsultantClient[]
   teamMembers       TeamMember[]
+  scopingProjects   ScopingProject[]
 
   @@index([userId])
   @@index([siret])
@@ -305,6 +308,7 @@ model Diagnostic {
   hoshinMatrices    HoshinMatrix[]
   roadmap           Roadmap?
   reportJobs        ReportJob[]
+  scopingStakeholder ScopingStakeholder?
 
   @@index([companyId])
   @@index([status])
@@ -375,7 +379,8 @@ model VsmMap {
 
 model IshikawaDiagram {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  diagnosticId     String   @map("diagnostic_id") @db.Uuid
+  diagnosticId     String?  @map("diagnostic_id") @db.Uuid
+  scopingProjectId String?  @map("scoping_project_id") @db.Uuid
   problem          String
   causes           Json
   rootCause        String   @map("root_cause")
@@ -383,15 +388,18 @@ model IshikawaDiagram {
   createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
-  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  diagnostic     Diagnostic?     @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  scopingProject ScopingProject? @relation(fields: [scopingProjectId], references: [id], onDelete: Cascade)
 
   @@index([diagnosticId])
+  @@index([scopingProjectId])
   @@map("ishikawa_diagrams")
 }
 
 model A3Report {
   id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  diagnosticId       String   @map("diagnostic_id") @db.Uuid
+  diagnosticId       String?  @map("diagnostic_id") @db.Uuid
+  scopingProjectId   String?  @map("scoping_project_id") @db.Uuid
   background         String
   problemStatement   String   @map("problem_statement")
   goal               String
@@ -402,10 +410,60 @@ model A3Report {
   createdAt          DateTime @default(now()) @map("created_at")
 
   // Relations
-  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  diagnostic     Diagnostic?     @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  scopingProject ScopingProject? @relation(fields: [scopingProjectId], references: [id], onDelete: Cascade)
 
   @@index([diagnosticId])
+  @@index([scopingProjectId])
   @@map("a3_reports")
+}
+
+// ============================================================================
+// SCOPING MODELS
+// ============================================================================
+
+model ScopingProject {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String   @map("company_id") @db.Uuid
+  name                String
+  ownerType           String   @map("owner_type") // 'consultant' | 'client_lead'
+  createdByUserId     String   @map("created_by_user_id") @db.Uuid
+  requiredRespondents Int      @default(1) @map("required_respondents")
+  status              String   @default("draft") // draft | collecting | ready | synthesized
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy        User                 @relation("ScopingProjectCreatedBy", fields: [createdByUserId], references: [id])
+  stakeholders     ScopingStakeholder[]
+  a3Reports        A3Report[]
+  ishikawaDiagrams IshikawaDiagram[]
+
+  @@index([companyId])
+  @@map("scoping_projects")
+}
+
+model ScopingStakeholder {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId         String   @map("project_id") @db.Uuid
+  fullName          String   @map("full_name")
+  email             String
+  roleLabel         String   @map("role_label")
+  hierarchyParentId String?  @map("hierarchy_parent_id") @db.Uuid
+  inviteStatus      String   @default("pending") @map("invite_status") // pending|invited|started|completed
+  respondentUserId  String?  @map("respondent_user_id") @db.Uuid
+  diagnosticId      String?  @unique @map("diagnostic_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  project         ScopingProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hierarchyParent ScopingStakeholder? @relation("StakeholderHierarchy", fields: [hierarchyParentId], references: [id])
+  children        ScopingStakeholder[] @relation("StakeholderHierarchy")
+  respondent      User?               @relation("StakeholderRespondent", fields: [respondentUserId], references: [id])
+  diagnostic      Diagnostic?         @relation(fields: [diagnosticId], references: [id])
+
+  @@index([projectId])
+  @@index([respondentUserId])
+  @@map("scoping_stakeholders")
 }
 
 model SwotAnalysis {
