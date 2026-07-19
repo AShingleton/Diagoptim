@@ -1,4 +1,5 @@
 import type { ScopingSynthesis } from "@/lib/ai/engine";
+import { textPath } from "./fishbone-font-paths";
 
 type Causes = ScopingSynthesis["ishikawa"]["causes"];
 
@@ -24,13 +25,10 @@ const ICONS: Record<string, string> = {
     "M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20 M10 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4 M15 4.6a3.5 3.5 0 0 1 0 6.8",
   list: "M8 6h11 M8 12h11 M8 18h11 M4 6h.01 M4 12h.01 M4 18h.01",
   gauge: "M12 14l4-4 M20.5 15a8.5 8.5 0 1 0-17 0",
-  cog: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M12 2v3 M12 19v3 M4.2 4.2l2.1 2.1 M17.7 17.7l2.1 2.1 M2 12h3 M19 12h3 M4.2 19.8l2.1-2.1 M17.7 6.3l2.1-2.1",
+  cog: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   box: "M21 8v8l-9 5-9-5V8l9-5 9 5 M3.5 7.5 12 12l8.5-4.5 M12 12v9",
   globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18 M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18",
 };
-
-const esc = (s: string) =>
-  (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function wrap(text: string, maxChars: number, maxLines: number): string[] {
   const words = (text || "").split(/\s+/).filter(Boolean);
@@ -71,8 +69,6 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
     const cx = CX[idx % 3];
     const cy = top ? topCY : botCY;
     const list = (causes as Record<string, string[]>)[c.key] ?? [];
-    // main rib: from circle (near spine side) to a point on the spine
-    const ribTopX = cx + 60;
     const spineAttach = cx + 190;
     const ax = cx + CIRCLE_R * 0.5, ay = top ? cy + CIRCLE_R * 0.7 : cy - CIRCLE_R * 0.7;
     const rib = `<line x1="${ax}" y1="${ay}" x2="${spineAttach}" y2="${spineY}" stroke="${RIB}" stroke-width="3"/>`;
@@ -87,17 +83,16 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
       branches += `<line x1="${px}" y1="${py}" x2="${bx}" y2="${py}" stroke="${RIB}" stroke-width="1.6"/>`;
       const lines = wrap(list[i], 26, 2);
       lines.forEach((ln, li) => {
-        branches += `<text x="${bx + 4}" y="${py - 6 - (lines.length - 1 - li) * 13}" font-family="FishSans" font-size="12" fill="${INK}">${esc(ln)}</text>`;
+        branches += textPath(ln, bx + 4, py - 6 - (lines.length - 1 - li) * 13, 12, { color: INK });
       });
     }
-    // circle + icon + label
     const labelX = cx + CIRCLE_R + 10;
     return `
       ${rib}
       ${branches}
       <circle cx="${cx}" cy="${cy}" r="${CIRCLE_R}" fill="${c.color}"/>
       ${iconG(cx, cy, c.icon)}
-      <text x="${labelX}" y="${cy + 6}" font-family="FishSans" font-weight="bold" font-size="18" fill="${c.color}">${esc(c.label)}</text>`;
+      ${textPath(c.label, labelX, cy + 6, 18, { bold: true, color: c.color })}`;
   };
 
   // Effect arrow (right) — big orange chevron with the problem inside.
@@ -106,9 +101,9 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
   const effect = `
     <polygon points="${ex},${ey} ${ex + ew - 70},${ey} ${ex + ew},${spineY} ${ex + ew - 70},${ey + eh} ${ex},${ey + eh} ${ex + 55},${spineY}"
       fill="${ORANGE}"/>
-    <text x="${tx}" y="${spineY - 64}" font-family="FishSans" font-weight="bold" font-size="19" fill="#fff">PROBLEME</text>
+    ${textPath("PROBLEME", tx, spineY - 64, 19, { bold: true, color: "#fff" })}
     ${wrap(problem, 22, 6)
-      .map((l, i) => `<text x="${tx}" y="${spineY - 40 + i * 16}" font-family="FishSans" font-size="12.5" fill="#fff">${esc(l)}</text>`)
+      .map((l, i) => textPath(l, tx, spineY - 40 + i * 16, 12.5, { color: "#fff" }))
       .join("")}`;
 
   // Tail arrow (left)
@@ -118,7 +113,7 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <rect width="${W}" height="${H}" fill="#ffffff"/>
-  <text x="40" y="42" font-family="FishSans" font-weight="bold" font-size="26" fill="${ORANGE}">Diagramme d'Ishikawa (6M)</text>
+  ${textPath("Diagramme d'Ishikawa (6M)", 40, 42, 26, { bold: true, color: ORANGE })}
 
   <line x1="${spineX1}" y1="${spineY}" x2="${spineX2}" y2="${spineY}" stroke="${INK}" stroke-width="5"/>
   ${tail}
@@ -127,10 +122,7 @@ export function buildFishboneSvg(causes: Causes, problem: string, rootCause: str
 
   <line x1="40" y1="${H - 54}" x2="${W - 40}" y2="${H - 54}" stroke="${ORANGE}" stroke-width="1"/>
   ${rootLines
-    .map(
-      (l, i) =>
-        `<text x="40" y="${H - 32 + i * 16}" font-family="FishSans" font-size="13" font-weight="${i === 0 ? "bold" : "normal"}" fill="${i === 0 ? INK : GREY}">${esc(l)}</text>`,
-    )
+    .map((l, i) => textPath(l, 40, H - 32 + i * 16, 13, { bold: i === 0, color: i === 0 ? INK : GREY }))
     .join("")}
 </svg>`;
 }
