@@ -182,18 +182,19 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   });
   y += 4;
 
-  // --- Ishikawa fishbone diagram (own landscape page) ---
+  // --- Ishikawa fishbone diagram (own PORTRAIT page) ---
   // The finished 6M fishbone is rendered by @/lib/scoping/fishbone-image and
-  // embedded here as a single PNG (aspect ratio 1420 x 900).
+  // embedded here as a single PNG. The source SVG is 1500 x 840, so the true
+  // aspect is 840/1500 — using it avoids the vertical stretch the old 900/1420
+  // ratio introduced. Placed fit-to-width on a portrait page, centred vertically.
   function drawFishbone() {
-    doc.addPage("a4", "landscape");
-    const lw = doc.internal.pageSize.getWidth();
-    const lh = doc.internal.pageSize.getHeight();
-    const m = 40;
-    const imgW = lw - 2 * m;
-    const imgH = imgW * (900 / 1420);
-    const imgY = Math.max(30, (lh - imgH) / 2);
-    doc.addImage(fishbonePngDataUri(synth.ishikawa), "PNG", m, imgY, imgW, imgH);
+    doc.addPage("a4", "portrait");
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const imgW = pw - 2 * margin;
+    const imgH = imgW * (840 / 1500);
+    const imgY = Math.max(margin, (ph - imgH) / 2);
+    doc.addImage(fishbonePngDataUri(synth.ishikawa), "PNG", margin, imgY, imgW, imgH);
     doc.addPage("a4", "portrait");
     y = margin; // continue the document in portrait
   }
@@ -228,7 +229,7 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
 
   heading("Priorisation & roadmap");
   prose(c.priorisation);
-  heading("Criteres de recette");
+  heading("Criteres de succes");
   prose(c.criteresDeRecette);
 
   // --- Footer: page number, bottom-center, on every page ---

@@ -210,6 +210,100 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     footer(s);
   };
 
+  /** Splits a free-text string into vertical bullet items (enumeration, else ; . ,). */
+  const clausesToItems = (text: string): string[] => {
+    const cleaned = stripMarkdown(text || "").trim();
+    if (!cleaned) return [];
+    const parsed = parseEnumeration(cleaned);
+    if (parsed && parsed.items.length) return parsed.items.map((s) => stripMarkdown(s));
+    let parts = cleaned.split(/\s*;\s*/).filter(Boolean);
+    if (parts.length < 2) parts = cleaned.split(/\.\s+/).filter(Boolean);
+    if (parts.length < 2) parts = cleaned.split(/\s*,\s*/).filter(Boolean);
+    return parts.map((p) => p.replace(/[.;,\s]+$/, "").trim()).filter(Boolean);
+  };
+
+  /** Two side-by-side cards, each rendered as a vertical bullet list. */
+  const twoBulletCardSlide = (
+    title: string,
+    emoji: string,
+    left: { h: string; items: string[] },
+    right: { h: string; items: string[] },
+  ) => {
+    const s = pptx.addSlide();
+    header(s, title, emoji);
+    const cw = (PW - 0.8 - 0.4) / 2;
+    const cards = [
+      { x: 0.4, ...left },
+      { x: 0.4 + cw + 0.4, ...right },
+    ];
+    cards.forEach((cd) => {
+      s.addShape("roundRect", { x: cd.x, y: 1.1, w: cw, h: 5.85, fill: { color: BRAND.orangeLight }, line: { color: BRAND.orange, width: 1 } });
+      s.addShape("rect", { x: cd.x, y: 1.1, w: cw, h: 0.5, fill: { color: BRAND.orange } });
+      s.addText(cd.h, { x: cd.x + 0.2, y: 1.1, w: cw - 0.4, h: 0.5, fontSize: 14, bold: true, color: BRAND.white, valign: "middle" });
+      const runs: Runs = (cd.items.length ? cd.items : ["—"]).map((it) => ({
+        text: stripMarkdown(it),
+        options: { bullet: { characterCode: "25B8", indent: 16 }, color: BRAND.ink, breakLine: true, paraSpaceAfter: 6 },
+      }));
+      s.addText(runs, { x: cd.x + 0.25, y: 1.75, w: cw - 0.5, h: 5.05, fontSize: 13, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
+    });
+    footer(s);
+  };
+
+  /** Parses "Lot 1 : … Lot 2 : …" (or sentences) into ordered roadmap phases. */
+  const parseLots = (text: string): Array<{ label: string; desc: string }> => {
+    const cleaned = stripMarkdown(text || "");
+    const lots: Array<{ label: string; desc: string }> = [];
+    const re = /Lot\s*(\d+)\s*:?\s*([^.]*)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(cleaned)) !== null) {
+      lots.push({ label: `Lot ${m[1]}`, desc: m[2].trim().replace(/[.;,\s]+$/, "") });
+    }
+    if (!lots.length) {
+      cleaned.split(/\.\s+/).map((s) => s.trim()).filter(Boolean).forEach((s, i) => lots.push({ label: `Phase ${i + 1}`, desc: s }));
+    }
+    return lots.slice(0, 6);
+  };
+
+  /** Roadmap as a staircase Gantt: one row per phase, bars stepping across the timeline. */
+  const ganttSlide = (title: string, emoji: string, priorisationText: string) => {
+    const s = pptx.addSlide();
+    header(s, title, emoji);
+    bigCard(s);
+    s.addShape("rect", { x: 0.4, y: 1.1, w: 0.14, h: 5.85, fill: { color: BRAND.orange } });
+    const lots = parseLots(priorisationText);
+    const N = Math.max(lots.length, 1);
+    const labelW = 3.2;
+    const gridX = 0.85 + labelW;
+    const gridRight = PW - 0.85;
+    const gridW = gridRight - gridX;
+    const cols = N;
+    const colW = gridW / cols;
+    const topY = 1.55;
+    const rowsTop = topY + 0.45;
+    const rowH = Math.min(1.0, (6.35 - rowsTop) / N);
+    // timeline header + gridlines
+    for (let i = 0; i < cols; i++) {
+      s.addText(`Phase ${i + 1}`, { x: gridX + i * colW, y: topY, w: colW, h: 0.35, fontSize: 11, bold: true, color: BRAND.orangeDark, align: "center" });
+      s.addShape("line", { x: gridX + i * colW, y: rowsTop, w: 0, h: N * rowH, line: { color: "E5E7EB", width: 1 } });
+    }
+    s.addShape("line", { x: gridRight, y: rowsTop, w: 0, h: N * rowH, line: { color: "E5E7EB", width: 1 } });
+    lots.forEach((lot, i) => {
+      const ry = rowsTop + i * rowH;
+      const runs: Runs = [
+        { text: lot.label, options: { bold: true, color: BRAND.ink, fontSize: 12, breakLine: true } },
+      ];
+      if (lot.desc) runs.push({ text: trunc(lot.desc, 70), options: { color: BRAND.grey, fontSize: 10, breakLine: true } });
+      s.addText(runs, { x: 0.85, y: ry, w: labelW - 0.15, h: rowH, fontSize: 12, valign: "middle", wrap: true, fit: "shrink" });
+      const bx = gridX + i * colW + 0.06;
+      const bw = colW - 0.12;
+      s.addShape("roundRect", { x: bx, y: ry + rowH * 0.22, w: bw, h: rowH * 0.56, rectRadius: 0.05, fill: { color: BRAND.orange }, line: { type: "none" } });
+    });
+    s.addText("Séquencement indicatif — à affiner avec les parties prenantes", {
+      x: 0.85, y: 6.5, w: PW - 1.7, h: 0.3, fontSize: 9, italic: true, color: BRAND.grey, valign: "middle",
+    });
+    footer(s);
+  };
+
   // ---------- 1. COVER ----------
   {
     const s = pptx.addSlide();
@@ -239,50 +333,56 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     s.addText("EmbraceIA", { x: 0.5, y: 6.6, w: PW - 1, h: 0.4, fontSize: 13, bold: true, color: BRAND.white, align: "center" });
   }
 
-  // ---------- 2. A3 — one full slide per box (long boxes overflowed a 2×2 grid) ----------
+  // ---------- 2. A3 — Boxes 1-3 merged (Contexte / Problème / Objectif) on one slide ----------
   {
-    const a3Boxes: Array<{ emoji: string; n: number; name: string; body: string }> = [
-      { emoji: "🧭", n: 1, name: "Contexte", body: synth.a3.background },
-      { emoji: "⚠️", n: 2, name: "Problème", body: synth.a3.problemStatement },
-      { emoji: "🎯", n: 3, name: "Objectif", body: synth.a3.goal },
-      { emoji: "🔎", n: 4, name: "Causes racines", body: synth.a3.rootCauseAnalysis },
+    const s = pptx.addSlide();
+    header(s, "Analyse A3 — État des lieux", "🧩");
+    bigCard(s);
+    s.addShape("rect", { x: 0.4, y: 1.1, w: 0.14, h: 5.85, fill: { color: BRAND.orange } });
+    const sections: Array<{ label: string; body: string }> = [
+      { label: "🧭  Contexte", body: synth.a3.background },
+      { label: "⚠️  Problème / état actuel", body: synth.a3.problemStatement },
+      { label: "🎯  Objectif cible", body: synth.a3.goal },
     ];
-    a3Boxes.forEach((b) => {
-      const s = pptx.addSlide();
-      header(s, `A3 — Boîte ${b.n} · ${b.name}`, "🧩");
-      // Large single card; body renders with explicit height + fit:shrink so long text never spills out.
-      s.addShape("roundRect", { x: 0.4, y: 1.1, w: PW - 0.8, h: 5.85, fill: { color: BRAND.orangeLight }, line: { color: BRAND.orange, width: 1 } });
-      s.addShape("rect", { x: 0.4, y: 1.1, w: 0.14, h: 5.85, fill: { color: BRAND.orange } });
-      s.addText(`${b.emoji}  Boîte ${b.n} · ${b.name}`, {
-        x: 0.85,
-        y: 1.3,
-        w: PW - 1.7,
-        h: 0.55,
-        fontSize: 18,
-        bold: true,
-        color: BRAND.orangeDark,
-        valign: "middle",
-      });
-      s.addShape("rect", { x: 0.85, y: 1.95, w: PW - 1.7, h: 0.03, fill: { color: BRAND.orange } });
-      renderBody(s, b.body, { x: 0.85, y: 2.15, w: PW - 1.7, h: 4.6 }, 15);
-      footer(s);
+    const runs: Runs = [];
+    sections.forEach((sec) => {
+      runs.push({ text: sec.label, options: { bold: true, fontSize: 15, color: BRAND.orangeDark, breakLine: true, paraSpaceBefore: 8, paraSpaceAfter: 3 } });
+      runs.push({ text: stripMarkdown(sec.body || "—"), options: { fontSize: 12.5, color: BRAND.ink, breakLine: true, paraSpaceAfter: 6 } });
     });
+    s.addText(runs, { x: 0.85, y: 1.35, w: PW - 1.7, h: 5.35, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
+    footer(s);
   }
 
-  // ---------- 3. ISHIKAWA FISHBONE ----------
+  // ---------- 3. ISHIKAWA FISHBONE (before the root-cause box) ----------
   {
     const s = pptx.addSlide();
     header(s, "Analyse des causes — Ishikawa 6M", "🐟");
-    // The finished 6M fishbone (spine, ribs, pills, cause boxes, PROBLÈME head,
-    // root-cause caption) is rendered by @/lib/scoping/fishbone-image and embedded
-    // as a single centered PNG (aspect ratio 1420 x 900).
-    s.addImage({
-      data: fishbonePngDataUri(synth.ishikawa),
-      x: 2.06,
-      y: 1.25,
-      w: 9.2,
-      h: 9.2 * (900 / 1420), // ≈ 5.83in, keeps aspect
-    });
+    // The finished 6M fishbone is rendered by @/lib/scoping/fishbone-image and
+    // embedded as a single centered PNG. Source SVG is 1500 x 840 → true aspect
+    // 840/1500 (the old 900/1420 stretched it vertically).
+    const iw = 9.6;
+    s.addImage({ data: fishbonePngDataUri(synth.ishikawa), x: (PW - iw) / 2, y: 1.45, w: iw, h: iw * (840 / 1500) });
+    footer(s);
+  }
+
+  // ---------- 4. A3 — Boîte 4 · Causes racines (listed one below the other) ----------
+  {
+    const s = pptx.addSlide();
+    header(s, "A3 — Boîte 4 · Causes racines", "🔎");
+    bigCard(s);
+    s.addShape("rect", { x: 0.4, y: 1.1, w: 0.14, h: 5.85, fill: { color: BRAND.orange } });
+    // Headline: the single deepest root cause; then the breakdown as a vertical list.
+    const breakdown = clausesToItems(synth.a3.rootCauseAnalysis);
+    const runs: Runs = [
+      { text: "Cause racine principale", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } },
+      { text: stripMarkdown(synth.ishikawa.rootCause || "—"), options: { fontSize: 14, color: BRAND.ink, breakLine: true, paraSpaceAfter: 12 } },
+      { text: "Causes racines identifiées", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 4 } },
+      ...(breakdown.length ? breakdown : ["—"]).map((it) => ({
+        text: stripMarkdown(it),
+        options: { bullet: { characterCode: "25B8", indent: 16 }, fontSize: 13, color: BRAND.ink, breakLine: true, paraSpaceAfter: 6 },
+      })),
+    ];
+    s.addText(runs, { x: 0.85, y: 1.35, w: PW - 1.7, h: 5.35, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
     footer(s);
   }
 
@@ -316,16 +416,25 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
   // ---------- 8. Données & intégrations ----------
   contentSlide("Données & intégrations", "🗄️", c.donneesEtIntegrations);
 
-  // ---------- 9. Contraintes & risques ----------
-  contentSlide("Contraintes & risques", "🛡️", c.contraintesEtRisques);
+  // ---------- 9. Contraintes & risques (two bulleted cards) ----------
+  {
+    const cr = stripMarkdown(c.contraintesEtRisques || "");
+    const split = cr.split(/risques?\s*:/i);
+    const contraintesTxt = (split[0] || "").replace(/^\s*contraintes?\s*:/i, "").trim();
+    const risquesTxt = (split[1] || "").trim();
+    twoBulletCardSlide(
+      "Contraintes & risques",
+      "🛡️",
+      { h: "Contraintes", items: clausesToItems(contraintesTxt) },
+      { h: "Risques", items: clausesToItems(risquesTxt) },
+    );
+  }
 
-  // ---------- 10. Priorisation, roadmap & recette (two cards) ----------
-  twoCardSlide(
-    "Priorisation & recette",
-    "🗺️",
-    { h: "🗺️  Priorisation & roadmap", body: c.priorisation },
-    { h: "✅  Critères de recette", body: c.criteresDeRecette },
-  );
+  // ---------- 10. Roadmap (Gantt) ----------
+  ganttSlide("Priorisation & roadmap", "🗺️", c.priorisation);
+
+  // ---------- 11. Critères de succès (own slide) ----------
+  bulletSlide("Critères de succès", "✅", clausesToItems(c.criteresDeRecette));
 
   // ---------- 11. Prochaines étapes (closing) ----------
   {
@@ -340,7 +449,7 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
       "Prioriser le lot 1 (quick wins à fort impact)",
       "Lancer un POC sur le cas d'usage prioritaire (agent IA / automatisation)",
       "Planifier le déploiement et la conduite du changement",
-      "Mesurer les gains via les critères de recette définis",
+      "Mesurer les gains via les critères de succès définis",
     ];
     const runs: Runs = [
       { text: "Pour transformer ce cadrage en résultats :", options: { bold: true, color: BRAND.orangeDark, fontSize: 16, breakLine: true, paraSpaceAfter: 10 } },
