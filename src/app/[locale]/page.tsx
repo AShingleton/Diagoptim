@@ -61,24 +61,24 @@ function Testimonials() {
   const { t } = useTranslation();
   const testimonials = [
     {
-      name: "Sophie Martin",
-      role: "CEO, TechFlow",
+      name: "Thibault Wery",
+      role: "Co-fondateur, Savage Smokers",
       quote:
-        "DiagOptim nous a permis d'identifier des gaspillages que nous ne soupconnions meme pas. En 3 mois, nous avons reduit nos couts de 15%.",
-      avatar: "SM",
+        "Sur un atelier de fabrication artisanale, DiagOptim a tout de suite repéré nos goulots d'étranglement et priorisé les bons chantiers. La feuille de route était concrète, pas théorique.",
+      avatar: "TW",
     },
     {
-      name: "Pierre Durand",
-      role: "COO, IndustriePro",
+      name: "Bertrand Hyaumet",
+      role: "Président, CAP Conseil Achats Publics",
       quote:
-        "La feuille de route generee est incroyablement pertinente. Chaque action est claire, mesurable et priorisee.",
-      avatar: "PD",
+        "Le diagnostic conversationnel est redoutablement efficace : en une session, on a cartographié nos process et identifié les vrais gisements de temps. Les outils Lean intégrés nous ont fait gagner des semaines.",
+      avatar: "BH",
     },
     {
-      name: "Claire Lefevre",
-      role: "DG, BioServices",
+      name: "Christophe Laurence",
+      role: "Fondateur, Augmented Ops",
       quote:
-        "L'interface est intuitive et le diagnostic conversationnel rend l'experience presque ludique. Excellent outil.",
+        "Techniquement, l'approche est solide : l'IA structure le diagnostic autour de méthodes éprouvées (Ishikawa, DMAIC) au lieu de sortir des généralités. Un vrai copilote d'excellence opérationnelle.",
       avatar: "CL",
     },
   ];
