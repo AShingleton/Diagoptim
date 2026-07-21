@@ -228,15 +228,27 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
    * "Phase N (Semaines X-Y): …" (variable durations), else "Lot N" (4-week blocks),
    * else sentences (4-week blocks). Returns ordered phases with start/end weeks.
    */
-  const parsePhases = (text: string): Array<{ label: string; ws: number; we: number; desc: string }> => {
+  type Phase = { label: string; ws: number; we: number; desc: string };
+  const parsePhases = (text: string): Phase[] => {
     const cleaned = stripMarkdown(text || "");
-    const phases: Array<{ label: string; ws: number; we: number; desc: string }> = [];
-    const re = /Phase\s*(\d+)\s*\(?\s*Semaines?\s*(\d+)\s*(?:[-–—à]|a)\s*(\d+)\s*\)?\s*:?\s*([^.]*)/gi;
+    const phases: Phase[] = [];
+    // Phase headers like "Phase 1 (Critique - Semaines 1-4) :" — tolerate ANY words
+    // between "(" and "Semaines" (e.g. a priority label). The description is then
+    // everything up to the NEXT phase header (so sub-tasks (1)(2)… stay attached).
+    const headerRe = /Phase\s*(\d+)\s*\([^)]*?Semaines?\s*(\d+)\s*(?:[-–—à]|a)\s*(\d+)[^)]*\)\s*:?/gi;
+    const heads: Array<{ num: string; ws: number; we: number; start: number; end: number }> = [];
     let m: RegExpExecArray | null;
-    while ((m = re.exec(cleaned)) !== null) {
-      phases.push({ label: `Phase ${m[1]}`, ws: parseInt(m[2], 10), we: parseInt(m[3], 10), desc: m[4].trim().replace(/[.;,\s]+$/, "") });
+    while ((m = headerRe.exec(cleaned)) !== null) {
+      heads.push({ num: m[1], ws: parseInt(m[2], 10), we: parseInt(m[3], 10), start: m.index, end: headerRe.lastIndex });
     }
-    if (phases.length) return phases.slice(0, 8);
+    if (heads.length) {
+      heads.forEach((h, i) => {
+        const to = i + 1 < heads.length ? heads[i + 1].start : cleaned.length;
+        const desc = cleaned.slice(h.end, to).replace(/^[\s:–—-]+/, "").replace(/[\s.]+$/, "").trim();
+        phases.push({ label: `Phase ${h.num}`, ws: h.ws, we: h.we, desc });
+      });
+      return phases.slice(0, 8);
+    }
     const lotRe = /Lot\s*(\d+)\s*:?\s*([^.]*)/gi;
     let i = 0;
     while ((m = lotRe.exec(cleaned)) !== null) {
@@ -248,7 +260,8 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     return phases.slice(0, 8);
   };
 
-  /** Roadmap Gantt with a week axis; each phase bar spans its real weeks (variable length). */
+  /** Roadmap Gantt: full phase description (bulleted) on the left, week axis on top,
+   *  each bar spanning its real weeks (variable length), horizontal week labels. */
   const ganttSlide = (title: string, emoji: string, priorisationText: string) => {
     const s = pptx.addSlide();
     header(s, title, emoji);
@@ -257,32 +270,76 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     const phases = parsePhases(priorisationText);
     const N = Math.max(phases.length, 1);
     const maxWeek = Math.max(...phases.map((p) => p.we), 1);
-    const labelW = 3.4;
+    const labelW = 4.4;
     const gridX = 0.85 + labelW;
-    const gridRight = PW - 0.85;
+    const gridRight = PW - 0.55;
     const gridW = gridRight - gridX;
     const weekW = gridW / maxWeek;
-    const topY = 1.65;
-    const rowsTop = topY + 0.4;
-    const rowH = Math.min(0.95, (6.45 - rowsTop) / N);
-    const step = maxWeek > 8 ? 2 : 1;
-    s.addText("Semaines", { x: gridX, y: topY - 0.32, w: gridW, h: 0.25, fontSize: 10, italic: true, bold: true, color: BRAND.orangeDark, align: "left" });
+    const topY = 1.6;
+    const rowsTop = topY + 0.45;
+    const rowH = Math.min(1.5, (6.5 - rowsTop) / N);
+    s.addText("Semaines", { x: gridX, y: topY - 0.3, w: 2, h: 0.25, fontSize: 10, italic: true, bold: true, color: BRAND.orangeDark, align: "left" });
+    // Week gridlines + HORIZONTAL labels (wide, centred boxes so "S12" never wraps).
+    const step = maxWeek > 24 ? 4 : maxWeek > 12 ? 2 : 1;
     for (let w = 0; w <= maxWeek; w++) {
       const x = gridX + w * weekW;
       s.addShape("line", { x, y: rowsTop, w: 0, h: N * rowH, line: { color: "E5E7EB", width: 1 } });
-      if (w > 0 && w % step === 0) s.addText(`S${w}`, { x: x - weekW, y: topY, w: weekW, h: 0.3, fontSize: 9, color: BRAND.grey, align: "center" });
+      if (w > 0 && w % step === 0) {
+        const lw = Math.max(weekW * step, 0.5);
+        s.addText(`S${w}`, { x: x - lw / 2, y: topY, w: lw, h: 0.3, fontSize: 10, color: BRAND.grey, align: "center", valign: "middle" });
+      }
     }
     phases.forEach((p, i) => {
       const ry = rowsTop + i * rowH;
-      const runs: Runs = [{ text: p.label, options: { bold: true, color: BRAND.ink, fontSize: 12, breakLine: true } }];
-      if (p.desc) runs.push({ text: trunc(p.desc, 64), options: { color: BRAND.grey, fontSize: 9.5, breakLine: true } });
-      s.addText(runs, { x: 0.85, y: ry, w: labelW - 0.15, h: rowH, valign: "middle", wrap: true, fit: "shrink" });
+      // Left: phase label + FULL description (sub-tasks as bullets when present).
+      const runs: Runs = [];
+      runs.push({ text: p.label, options: { bold: true, color: BRAND.ink, fontSize: 13, breakLine: true, paraSpaceAfter: 2 } });
+      const parsed = parseEnumeration(cleanKeepBold(p.desc));
+      if (parsed && parsed.items.length) {
+        if (parsed.intro) pushRich(runs, parsed.intro, { color: BRAND.grey, fontSize: 9.5, spaceAfter: 2 });
+        parsed.items.forEach((it) => pushRich(runs, it, { marker: MARK, color: BRAND.grey, fontSize: 9.5, spaceAfter: 1 }));
+      } else if (p.desc) {
+        pushRich(runs, p.desc, { color: BRAND.grey, fontSize: 10 });
+      }
+      s.addText(runs, { x: 0.85, y: ry + 0.05, w: labelW - 0.2, h: rowH - 0.1, valign: "top", wrap: true, fit: "shrink" });
+      // Bar
+      const barH = Math.min(0.5, rowH * 0.42);
+      const by = ry + (rowH - barH) / 2;
       const bx = gridX + (p.ws - 1) * weekW + 0.03;
       const bw = Math.max((p.we - p.ws + 1) * weekW - 0.06, 0.25);
-      s.addShape("roundRect", { x: bx, y: ry + rowH * 0.22, w: bw, h: rowH * 0.56, rectRadius: 0.05, fill: { color: BRAND.orange }, line: { type: "none" } });
-      s.addText(`S${p.ws}-${p.we}`, { x: bx, y: ry + rowH * 0.22, w: bw, h: rowH * 0.56, fontSize: 9, bold: true, color: BRAND.white, align: "center", valign: "middle" });
+      s.addShape("roundRect", { x: bx, y: by, w: bw, h: barH, rectRadius: 0.05, fill: { color: BRAND.orange }, line: { type: "none" } });
+      s.addText(`S${p.ws}-${p.we}`, { x: bx, y: by, w: bw, h: barH, fontSize: 9, bold: true, color: BRAND.white, align: "center", valign: "middle" });
     });
-    s.addText("Séquencement indicatif — à affiner avec les parties prenantes", { x: 0.85, y: 6.65, w: PW - 1.7, h: 0.28, fontSize: 9, italic: true, color: BRAND.grey });
+    s.addText("Séquencement indicatif — à affiner avec les parties prenantes", { x: 0.85, y: 6.68, w: PW - 1.7, h: 0.28, fontSize: 9, italic: true, color: BRAND.grey });
+    footer(s);
+  };
+
+  /** Suggested KPI monitoring dashboard — a visual mockup (stat tiles + 2 charts). */
+  const dashboardSlide = () => {
+    const s = pptx.addSlide();
+    header(s, "Tableau de bord de suivi — proposition", "📊");
+    const tiles = [
+      { value: "-70%", label: "Temps de saisie", color: BRAND.orange },
+      { value: "0", label: "Double saisie", color: "2FB6A3" },
+      { value: "-45%", label: "Ruptures de stock", color: "E8542F" },
+      { value: "95%", label: "Adoption équipe", color: "3D9BE9" },
+    ];
+    const gap = 0.3;
+    const tileW = (PW - 0.8 - gap * 3) / 4;
+    const tileY = 1.2, tileH = 1.55;
+    tiles.forEach((t, i) => {
+      const tx = 0.4 + i * (tileW + gap);
+      s.addShape("roundRect", { x: tx, y: tileY, w: tileW, h: tileH, rectRadius: 0.08, fill: { color: "FFFFFF" }, line: { color: t.color, width: 1.5 } });
+      s.addShape("rect", { x: tx, y: tileY, w: 0.12, h: tileH, fill: { color: t.color } });
+      s.addText(t.value, { x: tx + 0.2, y: tileY + 0.12, w: tileW - 0.35, h: 0.8, fontSize: 34, bold: true, color: t.color, align: "left", valign: "middle" });
+      s.addText(t.label, { x: tx + 0.22, y: tileY + 0.92, w: tileW - 0.4, h: 0.5, fontSize: 12, color: BRAND.ink, align: "left", valign: "top" });
+    });
+    const chartY = 3.05, chartH = 3.4;
+    const bar = [{ name: "Erreurs / mois", labels: ["M1", "M2", "M3", "M4", "M5", "M6"], values: [42, 30, 20, 12, 6, 3] }];
+    s.addChart(pptx.ChartType.bar, bar, { x: 0.5, y: chartY, w: 6.1, h: chartH, barDir: "col", chartColors: [BRAND.orange], showTitle: true, title: "Erreurs de saisie / mois (↓)", titleColor: BRAND.ink, titleFontSize: 13, showValue: false, showLegend: false, catAxisLabelColor: BRAND.grey, valAxisLabelColor: BRAND.grey });
+    const dough = [{ name: "Adoption", labels: ["Adopté", "En cours", "À faire"], values: [70, 20, 10] }];
+    s.addChart(pptx.ChartType.doughnut, dough, { x: 7.0, y: chartY, w: 5.8, h: chartH, chartColors: [BRAND.orange, "F2A03D", "E5E7EB"], showTitle: true, title: "Adoption par site", titleColor: BRAND.ink, titleFontSize: 13, showLegend: true, legendPos: "b", legendColor: BRAND.grey, holeSize: 60, showValue: true, dataLabelColor: "FFFFFF", dataLabelFontSize: 11 });
+    s.addText("Maquette indicative — indicateurs à définir avec le client", { x: 0.5, y: 6.65, w: PW - 1, h: 0.3, fontSize: 9, italic: true, color: BRAND.grey });
     footer(s);
   };
 
@@ -392,6 +449,9 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
 
   // ---------- 13. Critères de succès ----------
   bulletSlide("Critères de succès", "✅", clausesToItems(c.criteresDeRecette));
+
+  // ---------- 14. Tableau de bord de suivi (KPIs) — mockup ----------
+  dashboardSlide();
 
   // ---------- 14. Prochaines étapes (closing) ----------
   {
