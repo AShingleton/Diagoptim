@@ -440,6 +440,60 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     footer(s);
   };
 
+  // Automatability matrix: standardisation (X) × volume (Y), tasks plotted, coloured by mode.
+  const MODE_COLOR: Record<string, string> = { automatisable: BRAND.orange, assiste: "F2A03D", humain: "3D9BE9" };
+  const MODE_LABEL: Record<string, string> = { automatisable: "Automatisable", assiste: "Assisté par IA", humain: "Humain dans la boucle" };
+  const automatabilitySlide = (auto: NonNullable<ScopingSynthesis["automatisation"]>) => {
+    const s = pptx.addSlide();
+    header(s, "Automatisabilité des tâches", "🤖");
+    bigCard(s);
+    sideAccent(s);
+    // Plot area
+    const plotX = 2.1, plotY = 1.55, plotW = 6.0, plotH = 4.2;
+    const cellW = plotW / 3, cellH = plotH / 3;
+    // grid + quick-wins highlight (top-right = high volume × high standardisation)
+    s.addShape("rect", { x: plotX + 2 * cellW, y: plotY, w: cellW, h: cellH, fill: { color: "FBE7DA" }, line: { type: "none" } });
+    for (let i = 0; i <= 3; i++) {
+      s.addShape("line", { x: plotX + i * cellW, y: plotY, w: 0, h: plotH, line: { color: "E5E7EB", width: 1 } });
+      s.addShape("line", { x: plotX, y: plotY + i * cellH, w: plotW, h: 0, line: { color: "E5E7EB", width: 1 } });
+    }
+    s.addText("Quick wins", { x: plotX + 2 * cellW, y: plotY + 0.02, w: cellW, h: 0.25, fontSize: 8, italic: true, color: BRAND.orangeDark, align: "center" });
+    // axis titles
+    s.addText("Standardisation →", { x: plotX, y: plotY + plotH + 0.05, w: plotW, h: 0.3, fontSize: 10, bold: true, color: BRAND.grey, align: "center" });
+    s.addText("Volume →", { x: plotX - 1.55, y: plotY, w: plotH, h: 0.3, fontSize: 10, bold: true, color: BRAND.grey, align: "center", rotate: 270 });
+    (["faible", "moyenne", "elevee"] as const).forEach((lbl, i) => s.addText(lbl, { x: plotX + i * cellW, y: plotY + plotH + 0.28, w: cellW, h: 0.22, fontSize: 8, color: BRAND.grey, align: "center" }));
+    (["élevé", "moyen", "faible"] as const).forEach((lbl, i) => s.addText(lbl, { x: plotX - 0.95, y: plotY + i * cellH + cellH / 2 - 0.11, w: 0.85, h: 0.22, fontSize: 8, color: BRAND.grey, align: "right" }));
+    // plot chips
+    const volIdx: Record<string, number> = { faible: 0, moyen: 1, eleve: 2 };
+    const stdIdx: Record<string, number> = { faible: 0, moyenne: 1, elevee: 2 };
+    const cellCount: Record<string, number> = {};
+    (auto.taches ?? []).forEach((t) => {
+      const sx = stdIdx[t.standardisation] ?? 1;
+      const vy = volIdx[t.volume] ?? 1;
+      const key = `${sx}-${vy}`;
+      const n = cellCount[key] ?? 0;
+      cellCount[key] = n + 1;
+      const cx = plotX + sx * cellW + 0.1;
+      const cy = plotY + (2 - vy) * cellH + 0.1 + n * 0.42;
+      const cw = cellW - 0.2, ch = 0.36;
+      s.addShape("roundRect", { x: cx, y: cy, w: cw, h: ch, rectRadius: 0.05, fill: { color: MODE_COLOR[t.mode] ?? BRAND.grey }, line: { type: "none" } });
+      s.addText(trunc(t.tache, 26), { x: cx + 0.05, y: cy, w: cw - 0.1, h: ch, fontSize: 7.5, color: BRAND.white, align: "center", valign: "middle", wrap: true });
+    });
+    // legend + notes (right column)
+    const rx = 8.5;
+    s.addText("Mode recommandé", { x: rx, y: 1.5, w: 4.3, h: 0.3, fontSize: 12, bold: true, color: BRAND.orangeDark });
+    ["automatisable", "assiste", "humain"].forEach((m, i) => {
+      const ly = 1.85 + i * 0.4;
+      s.addShape("roundRect", { x: rx, y: ly, w: 0.28, h: 0.28, rectRadius: 0.04, fill: { color: MODE_COLOR[m] }, line: { type: "none" } });
+      s.addText(MODE_LABEL[m], { x: rx + 0.4, y: ly - 0.03, w: 3.9, h: 0.34, fontSize: 11, color: BRAND.ink, valign: "middle" });
+    });
+    const runs: Runs = [];
+    if (auto.dataReadiness) { runs.push({ text: "Disponibilité des données", options: { bold: true, fontSize: 12, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } }); pushRich(runs, auto.dataReadiness, { color: BRAND.ink, fontSize: 11, spaceAfter: 8 }); }
+    if (auto.synthese) { runs.push({ text: "Par où commencer", options: { bold: true, fontSize: 12, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } }); pushRich(runs, auto.synthese, { color: BRAND.ink, fontSize: 11, spaceAfter: 2 }); }
+    if (runs.length) s.addText(runs, { x: rx, y: 3.25, w: 4.35, h: 3.4, valign: "top", wrap: true, fit: "shrink" });
+    footer(s);
+  };
+
   // ---------- 1. COVER ----------
   {
     const s = pptx.addSlide();
@@ -536,6 +590,9 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
 
   // ---------- 8. Cas d'usage agent IA ----------
   bulletSlide("Cas d'usage agent IA", "🤖", c.casUsageAgentIA.map((u) => `**${u.processus}** : ${u.usage}`));
+
+  // ---------- 8b. Automatisabilité des tâches (matrice) — si disponible ----------
+  if (synth.automatisation?.taches?.length) automatabilitySlide(synth.automatisation);
 
   // ---------- 9. Points de vue par rôle ----------
   roleSlide("Points de vue par rôle", "👥", c.pointsDeVueParRole);

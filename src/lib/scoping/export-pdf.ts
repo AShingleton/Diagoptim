@@ -242,6 +242,15 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   c.casUsageAgentIA.forEach((u) => bullet(`${u.processus} : ${u.usage} (causes : ${u.causesTraitees})`));
   y += 4;
 
+  if (synth.automatisation?.taches?.length) {
+    const MODE_FR: Record<string, string> = { automatisable: "Automatisable", assiste: "Assiste par IA", humain: "Humain dans la boucle" };
+    heading("Automatisabilite des taches");
+    synth.automatisation.taches.forEach((t) => bullet(`${t.tache} - volume ${t.volume}, standardisation ${t.standardisation}, ${t.nature} - score ${t.score}/100 - ${MODE_FR[t.mode] ?? t.mode}`));
+    if (synth.automatisation.dataReadiness) { subHeading("Disponibilite des donnees"); paragraph(synth.automatisation.dataReadiness); }
+    if (synth.automatisation.synthese) { subHeading("Par ou commencer"); paragraph(synth.automatisation.synthese); }
+    y += 4;
+  }
+
   heading("Donnees & integrations");
   prose(c.donneesEtIntegrations);
   heading("Contraintes & risques");

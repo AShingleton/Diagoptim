@@ -57,6 +57,13 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
   if (!project || !synth) notFound();
   const { a3, ishikawa, cahierDesCharges: cdc } = synth;
   const strat = synth.strategic;
+  const auto = synth.automatisation;
+  const MODE_STYLE: Record<string, string> = {
+    automatisable: "bg-primary/15 text-primary",
+    assiste: "bg-amber-500/15 text-amber-600",
+    humain: "bg-sky-500/15 text-sky-600",
+  };
+  const MODE_LBL: Record<string, string> = { automatisable: "Automatisable", assiste: "Assisté par IA", humain: "Humain dans la boucle" };
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -205,6 +212,29 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
           ))}
         </ul>
       </Block>
+      {auto?.taches?.length ? (
+        <Block title="Automatisabilité des tâches">
+          <ul className="grid gap-2">
+            {auto.taches.map((t, i) => (
+              <li key={i} className="rounded-lg border border-border/60 bg-card px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-foreground">{t.tache}</span>
+                  <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${MODE_STYLE[t.mode] ?? "bg-muted text-muted-foreground"}`}>{MODE_LBL[t.mode] ?? t.mode}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>volume {t.volume}</span>·<span>standardisation {t.standardisation}</span>·<span>{t.nature}</span>
+                  <span className="ml-auto flex items-center gap-1">
+                    <span className="h-1.5 w-24 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, t.score))}%` }} /></span>
+                    <span className="tabular-nums">{t.score}/100</span>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {auto.dataReadiness && <p className="mt-2 text-sm text-muted-foreground"><span className="font-medium text-foreground">Disponibilité des données :</span> {auto.dataReadiness}</p>}
+          {auto.synthese && <p className="mt-1 text-sm text-muted-foreground"><span className="font-medium text-foreground">Par où commencer :</span> {auto.synthese}</p>}
+        </Block>
+      ) : null}
       <Block title="Cas d'usage agent IA">
         <ul className="grid gap-2">
           {cdc.casUsageAgentIA.map((c, i) => (

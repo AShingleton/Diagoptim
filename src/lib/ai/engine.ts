@@ -584,6 +584,24 @@ export interface ScopingSynthesis {
     hoshin?: { objective: string; trueNorth: string; breakthroughs: string[]; alignment: string };
     sbs?: { valueStream: string; rationale: string };
   };
+  /**
+   * Automation-suitability layer (Tier 5) — scores each candidate task on volume,
+   * standardisation and rules-vs-judgment, yielding an automatability score + the
+   * right human-in-the-loop mode, plus a data-readiness read. Optional for backward
+   * compatibility with syntheses generated before this field existed.
+   */
+  automatisation?: {
+    taches: Array<{
+      tache: string;
+      volume: "faible" | "moyen" | "eleve";
+      standardisation: "faible" | "moyenne" | "elevee";
+      nature: "regles" | "mixte" | "jugement";
+      score: number; // 0-100 automatability
+      mode: "automatisable" | "assiste" | "humain"; // full auto / AI-assisted / human-in-the-loop
+    }>;
+    dataReadiness: string;
+    synthese: string;
+  };
 }
 
 export async function generateScopingSynthesis(
@@ -601,9 +619,17 @@ COUCHE STRATEGIQUE (optionnelle): certains repondants de niveau direction ont pu
 - Utilise l'objectif Hoshin pour PRECISER le goal (case 3 de l'A3) et pour ORDONNER la priorisation de facon descendante (la roadmap doit servir l'objectif strategique). "alignment" = une phrase reliant explicitement le projet a l'objectif strategique et a l'indicateur True North.
 - Utilise le contexte STEEPLE pour enrichir le background (case 1 de l'A3).
 - "sbs.valueStream" doit valoir exactement l'une de: demand, delivery, development, support.
+COUCHE AUTOMATISABILITE (toujours produite): pour CHAQUE tache de "tachesAAutomatiser", evalue son potentiel d'automatisation par IA et produis un objet dans "automatisation.taches":
+- "volume" (faible|moyen|eleve) = frequence/volume du processus (sers-toi des reponses 5W2H Quand/Combien).
+- "standardisation" (faible|moyenne|elevee) = degre de standardisation/repetabilite (une tache reglee et repetitive = elevee; une tache qui varie a chaque fois = faible).
+- "nature" (regles|mixte|jugement) = la tache repose-t-elle sur des regles claires, un melange, ou du jugement humain ?
+- "score" (0-100) = automatisabilite globale (eleve si volume eleve + standardisation elevee + regles).
+- "mode": "automatisable" (bon candidat automatisation complete), "assiste" (l'IA assiste, l'humain valide), ou "humain" (garder l'humain dans la boucle: jugement/relationnel/risque).
+Ajoute "automatisation.dataReadiness" (les donnees necessaires sont-elles disponibles, structurees, accessibles ? points de vigilance) et "automatisation.synthese" (1-2 phrases: par quoi commencer et pourquoi).
 N'utilise AUCUN formatage Markdown dans les valeurs (pas de **, pas de #, pas de backticks): texte brut uniquement.
 Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
 {"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
+ "automatisation":{"taches":[{"tache":"...","volume":"moyen","standardisation":"elevee","nature":"regles","score":80,"mode":"automatisable"}],"dataReadiness":"...","synthese":"..."},
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
  "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."},
  "strategic":{"steeple":{"social":"...","technological":"...","economic":"...","environmental":"...","political":"...","legal":"...","ethical":"..."},"swot":{"strengths":["..."],"weaknesses":["..."],"opportunities":["..."],"threats":["..."]},"hoshin":{"objective":"...","trueNorth":"...","breakthroughs":["..."],"alignment":"..."},"sbs":{"valueStream":"delivery","rationale":"..."}}}`;
