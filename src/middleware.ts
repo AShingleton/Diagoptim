@@ -29,6 +29,10 @@ const AUTH_PAGES: string[] = ["/login", "/register", "/forgot-password"];
 
 const ALLOWED_ORIGINS: string[] = [
   process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  // EmbraceIA marketing site posts leads cross-origin to /api/lead.
+  "https://embraceia.com",
+  "https://www.embraceia.com",
+  "https://next.embraceia.com",
 ];
 
 const CORS_HEADERS: Record<string, string> = {
