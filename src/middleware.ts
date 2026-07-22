@@ -9,6 +9,7 @@ const PUBLIC_API_ROUTES: string[] = [
   "/api/billing/webhook",
   "/api/health",
   "/api/cron",
+  "/api/lead", // public landing lead capture (own CORS, no auth)
 ];
 
 const PROTECTED_PAGE_PREFIXES: string[] = [
