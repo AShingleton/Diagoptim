@@ -53,7 +53,7 @@ export async function runSynthesis(
       rootCauseAnalysis: synthesis.a3.rootCauseAnalysis,
       countermeasures: synthesis.cahierDesCharges as unknown as object,
       implementationPlan: { priorisation: synthesis.cahierDesCharges.priorisation, taches: synthesis.cahierDesCharges.tachesAAutomatiser } as unknown as object,
-      followUp: { criteres: synthesis.cahierDesCharges.criteresDeRecette, strategic: synthesis.strategic ?? null, automatisation: synthesis.automatisation ?? null, kpis: synthesis.kpis ?? null } as unknown as object,
+      followUp: { criteres: synthesis.cahierDesCharges.criteresDeRecette, strategic: synthesis.strategic ?? null, automatisation: synthesis.automatisation ?? null, kpis: synthesis.kpis ?? null, operatingModel: synthesis.operatingModel ?? null } as unknown as object,
     },
   });
   await prisma.ishikawaDiagram.create({
@@ -83,10 +83,11 @@ export async function getStoredSynthesis(prisma: PrismaClient, projectId: string
   const ishikawa = await prisma.ishikawaDiagram.findFirst({ where: { scopingProjectId: projectId }, orderBy: { createdAt: "desc" } });
   if (!a3 || !ishikawa) return null;
   const cdc = a3.countermeasures as unknown as ScopingSynthesis["cahierDesCharges"];
-  const followUp = (a3.followUp ?? {}) as { strategic?: ScopingSynthesis["strategic"]; automatisation?: ScopingSynthesis["automatisation"]; kpis?: ScopingSynthesis["kpis"] };
+  const followUp = (a3.followUp ?? {}) as { strategic?: ScopingSynthesis["strategic"]; automatisation?: ScopingSynthesis["automatisation"]; kpis?: ScopingSynthesis["kpis"]; operatingModel?: ScopingSynthesis["operatingModel"] };
   const strategic = followUp.strategic ?? undefined;
   const automatisation = followUp.automatisation ?? undefined;
   const kpis = followUp.kpis ?? undefined;
+  const operatingModel = followUp.operatingModel ?? undefined;
   return {
     a3: { background: a3.background, problemStatement: a3.problemStatement, goal: a3.goal, rootCauseAnalysis: a3.rootCauseAnalysis },
     ishikawa: { problem: ishikawa.problem, causes: ishikawa.causes as unknown as ScopingSynthesis["ishikawa"]["causes"], rootCause: ishikawa.rootCause },
@@ -94,5 +95,6 @@ export async function getStoredSynthesis(prisma: PrismaClient, projectId: string
     ...(strategic ? { strategic } : {}),
     ...(automatisation ? { automatisation } : {}),
     ...(kpis ? { kpis } : {}),
+    ...(operatingModel ? { operatingModel } : {}),
   };
 }

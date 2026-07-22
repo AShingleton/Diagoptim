@@ -57,6 +57,11 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
   if (!project || !synth) notFound();
   const { a3, ishikawa, cahierDesCharges: cdc } = synth;
   const strat = synth.strategic;
+  const om = synth.operatingModel;
+  const NIVEAU_STYLE: Record<string, string> = { faible: "bg-red-500/15 text-red-600", moyen: "bg-amber-500/15 text-amber-600", eleve: "bg-emerald-500/15 text-emerald-600" };
+  const NIVEAU_LBL: Record<string, string> = { faible: "Faible", moyen: "Moyen", eleve: "Élevé" };
+  const VS_STYLE: Record<string, string> = { VA: "bg-emerald-500/20 text-emerald-700", NVA: "bg-red-500/20 text-red-700", NVA_necessaire: "bg-amber-500/20 text-amber-700" };
+  const VS_LBL: Record<string, string> = { VA: "Valeur ajoutée", NVA: "Gaspillage", NVA_necessaire: "Non-valeur nécessaire" };
   const auto = synth.automatisation;
   const MODE_STYLE: Record<string, string> = {
     automatisable: "bg-primary/15 text-primary",
@@ -161,6 +166,54 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
               {strat.sbs.rationale && <p className="mt-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">Pourquoi :</span> {strat.sbs.rationale}</p>}
             </div>
           )}
+        </section>
+      )}
+
+      {/* Operating-model layer — rendered only when collected (modele_operatoire+) */}
+      {om && (
+        <section className="mt-8">
+          <h2 className="text-xl font-bold">Modèle opératoire</h2>
+          {om.reviewMaturity?.length ? (
+            <div className="mt-3">
+              <h3 className="text-base font-semibold text-foreground">État actuel — matrice de maturité (reView)</h3>
+              <div className="mt-2 grid gap-2">
+                {om.reviewMaturity.map((r, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2">
+                    <span className="min-w-40 font-medium text-foreground">{r.dimension}</span>
+                    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${NIVEAU_STYLE[r.niveau] ?? "bg-muted"}`}>{NIVEAU_LBL[r.niveau] ?? r.niveau}</span>
+                    <span className="flex-1 text-sm text-muted-foreground">{r.soWhat}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {om.sipoc && (
+            <div className="mt-4">
+              <h3 className="text-base font-semibold text-foreground">SIPOC</h3>
+              <div className="mt-2 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {([["Suppliers", om.sipoc.suppliers], ["Inputs", om.sipoc.inputs], ["Process", om.sipoc.process], ["Outputs", om.sipoc.outputs], ["Customers", om.sipoc.customers]] as Array<[string, string[]]>).map(([h, arr]) => (
+                  <div key={h} className="rounded-lg border border-border/60 bg-card p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-primary">{h}</div>
+                    <ul className="mt-1 list-disc pl-4 text-sm text-muted-foreground">
+                      {(arr?.length ? arr : ["—"]).map((it, i) => <li key={i}>{it}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {om.valueStream?.steps?.length ? (
+            <div className="mt-4">
+              <h3 className="text-base font-semibold text-foreground">Chaîne de valeur — flux &amp; goulot</h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {om.valueStream.steps.map((st, i) => (
+                  <span key={i} className={`rounded-lg px-3 py-2 text-sm font-medium ${VS_STYLE[st.type] ?? "bg-muted"}`}>{st.nom}</span>
+                ))}
+              </div>
+              {om.valueStream.bottleneck && <p className="mt-2 text-sm text-muted-foreground"><span className="font-medium text-foreground">Goulot :</span> {om.valueStream.bottleneck}</p>}
+              {om.valueStream.leadTimeNote && <p className="mt-1 text-sm text-muted-foreground"><span className="font-medium text-foreground">Délai vs temps utile :</span> {om.valueStream.leadTimeNote}</p>}
+            </div>
+          ) : null}
         </section>
       )}
 

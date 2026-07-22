@@ -1393,6 +1393,24 @@ export const SCOPING_QUESTIONS: QuestionNode[] = [
 
   // --- SBS value stream placement (asked to a sponsor who knows the org) ---
   { id: 'scoping_sbs_valuestream', textFr: 'Dans quelle chaîne de valeur (SBS) ce projet s\'inscrit-il principalement ?', textEn: 'Which SBS value stream does this project mainly belong to?', type: 'choice', options: [ { value: 'demand', labelFr: 'Demand — capter / qualifier la demande', labelEn: 'Demand — capture/qualify demand' }, { value: 'delivery', labelFr: 'Delivery — produire / livrer', labelEn: 'Delivery — produce/deliver' }, { value: 'development', labelFr: 'Development — concevoir / innover', labelEn: 'Development — design/innovate' }, { value: 'support', labelFr: 'Support — fonctions support', labelEn: 'Support — support functions' } ], category: 'sbs', phase: 'scoping', scoringWeight: 0, hintFr: 'SBS — Value stream.', hintEn: 'SBS — Value stream.', altitudeMin: 'processus', roleMin: 'encadrement' },
+
+  // ==========================================================================
+  // TIER 2 — MODÈLE OPÉRATOIRE (reView current-state + SIPOC + value stream).
+  // Gated to modele_operatoire+ projects, encadrement+ respondents.
+  // ==========================================================================
+
+  // --- reView (état actuel & ambition) ---
+  { id: 'scoping_review_capability', textFr: 'Aujourd\'hui, quel est le niveau de maturité de l\'organisation sur ce périmètre (compétences, outils, standardisation, culture d\'amélioration) ?', textEn: 'Today, how mature is the organisation on this scope (skills, tools, standardisation, improvement culture)?', type: 'text', category: 'review', phase: 'scoping', scoringWeight: 0, hintFr: 'reView — État actuel / maturité.', hintEn: 'reView — Current state / maturity.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+  { id: 'scoping_review_ambition', textFr: 'Quel niveau visez-vous à 12-18 mois sur ce périmètre, et qu\'est-ce qui bloque aujourd\'hui pour y arriver ?', textEn: 'What level do you aim for in 12-18 months on this scope, and what blocks it today?', type: 'text', category: 'review', phase: 'scoping', scoringWeight: 0, hintFr: 'reView — Ambition / écart.', hintEn: 'reView — Ambition / gap.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+
+  // --- SIPOC (cadrage macro-processus) ---
+  { id: 'scoping_sipoc_process', textFr: 'Décrivez le processus cible en 3-5 grandes étapes (du début à la fin).', textEn: 'Describe the target process in 3-5 high-level steps (start to end).', type: 'text', category: 'sipoc', phase: 'scoping', scoringWeight: 0, hintFr: 'SIPOC — Process.', hintEn: 'SIPOC — Process.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+  { id: 'scoping_sipoc_suppliers_inputs', textFr: 'Qui/quoi alimente ce processus (fournisseurs) et avec quelles entrées (informations, matières, documents) ?', textEn: 'Who/what feeds this process (suppliers) and with which inputs (info, materials, documents)?', type: 'text', category: 'sipoc', phase: 'scoping', scoringWeight: 0, hintFr: 'SIPOC — Suppliers + Inputs.', hintEn: 'SIPOC — Suppliers + Inputs.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+  { id: 'scoping_sipoc_outputs_customers', textFr: 'Qu\'est-ce que ce processus produit (sorties) et pour qui (clients internes ou externes) ?', textEn: 'What does this process produce (outputs) and for whom (internal or external customers)?', type: 'text', category: 'sipoc', phase: 'scoping', scoringWeight: 0, hintFr: 'SIPOC — Outputs + Customers.', hintEn: 'SIPOC — Outputs + Customers.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+
+  // --- Value stream (flux + goulot) ---
+  { id: 'scoping_vsm_bottleneck', textFr: 'Dans ce flux, quelle est l\'étape la plus lente ou la plus problématique (le goulot d\'étranglement) ?', textEn: 'In this flow, which step is the slowest or most problematic (the bottleneck)?', type: 'text', category: 'vsm', phase: 'scoping', scoringWeight: 0, hintFr: 'VSM — Goulot.', hintEn: 'VSM — Bottleneck.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
+  { id: 'scoping_vsm_leadtime', textFr: 'Combien de temps s\'écoule entre le début et la fin du processus, et quelle part est réellement du travail utile (vs attente) ?', textEn: 'How long from start to end of the process, and how much is actual useful work (vs waiting)?', type: 'text', category: 'vsm', phase: 'scoping', scoringWeight: 0, hintFr: 'VSM — Délai vs temps utile.', hintEn: 'VSM — Lead time vs value-add.', altitudeMin: 'modele_operatoire', roleMin: 'encadrement' },
 ];
 
 // ============================================================================

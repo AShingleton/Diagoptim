@@ -183,6 +183,28 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
     if (strat.sbs.rationale) paragraph(strat.sbs.rationale);
   }
 
+  // --- Operating-model layer (optional) ---
+  const om = synth.operatingModel;
+  const NIV: Record<string, string> = { faible: "Faible", moyen: "Moyen", eleve: "Eleve" };
+  const VST: Record<string, string> = { VA: "Valeur ajoutee", NVA: "Gaspillage", NVA_necessaire: "Non-valeur necessaire" };
+  if (om?.reviewMaturity?.length) {
+    heading("Etat actuel - matrice de maturite (reView)");
+    om.reviewMaturity.forEach((r) => bullet(`${r.dimension} : ${NIV[r.niveau] ?? r.niveau} - ${r.soWhat}`));
+    y += 4;
+  }
+  if (om?.sipoc) {
+    heading("SIPOC - cadrage du processus");
+    ([["Fournisseurs", om.sipoc.suppliers], ["Entrees", om.sipoc.inputs], ["Process", om.sipoc.process], ["Sorties", om.sipoc.outputs], ["Clients", om.sipoc.customers]] as Array<[string, string[]]>)
+      .forEach(([l, arr]) => { if (arr?.length) { subHeading(l); arr.forEach(bullet); } });
+  }
+  if (om?.valueStream?.steps?.length) {
+    heading("Chaine de valeur - flux & goulot");
+    om.valueStream.steps.forEach((st) => bullet(`${st.nom} (${VST[st.type] ?? st.type})`));
+    if (om.valueStream.bottleneck) { subHeading("Goulot d'etranglement"); paragraph(om.valueStream.bottleneck); }
+    if (om.valueStream.leadTimeNote) { subHeading("Delai vs temps utile"); paragraph(om.valueStream.leadTimeNote); }
+    y += 4;
+  }
+
   // --- Ishikawa 6M ---
   heading("Ishikawa 6M - " + synth.ishikawa.problem, 12);
   const causes = synth.ishikawa.causes as Record<string, string[]>;

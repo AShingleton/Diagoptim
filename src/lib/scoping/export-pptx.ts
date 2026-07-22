@@ -499,6 +499,83 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     footer(s);
   };
 
+  // ---------- Operating-model slides (Tier 2) — rendered only when collected ----------
+  type OpModel = NonNullable<ScopingSynthesis["operatingModel"]>;
+  const NIVEAU_COLOR: Record<string, string> = { faible: "C0392B", moyen: "F2A03D", eleve: "2FB6A3" };
+  const NIVEAU_LABEL: Record<string, string> = { faible: "Faible", moyen: "Moyen", eleve: "Élevé" };
+  const VS_COLOR: Record<string, string> = { VA: "2FB6A3", NVA: "C0392B", NVA_necessaire: "F2A03D" };
+  const VS_LABEL: Record<string, string> = { VA: "Valeur ajoutée", NVA: "Gaspillage", NVA_necessaire: "Non-valeur nécessaire" };
+
+  const reviewMaturitySlide = (rows: NonNullable<OpModel["reviewMaturity"]>) => {
+    const s = pptx.addSlide();
+    header(s, "État actuel — matrice de maturité (reView)", "🧭");
+    bigCard(s);
+    sideAccent(s);
+    const topY = 1.35, rowH = Math.min(0.9, (6.7 - topY) / Math.max(rows.length, 1));
+    rows.forEach((r, i) => {
+      const y = topY + i * rowH;
+      s.addText(r.dimension, { x: 0.85, y, w: 3.0, h: rowH, fontSize: 13, bold: true, color: BRAND.ink, valign: "middle", wrap: true, fit: "shrink" });
+      s.addShape("roundRect", { x: 3.95, y: y + rowH / 2 - 0.18, w: 1.3, h: 0.36, rectRadius: 0.05, fill: { color: NIVEAU_COLOR[r.niveau] ?? BRAND.grey }, line: { type: "none" } });
+      s.addText(NIVEAU_LABEL[r.niveau] ?? r.niveau, { x: 3.95, y: y + rowH / 2 - 0.18, w: 1.3, h: 0.36, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle" });
+      const runs: Runs = [];
+      pushRich(runs, r.soWhat || "—", { color: BRAND.grey, fontSize: 11 });
+      s.addText(runs, { x: 5.45, y, w: PW - 6.3, h: rowH, valign: "middle", wrap: true, fit: "shrink" });
+      if (i < rows.length - 1) s.addShape("line", { x: 0.85, y: y + rowH, w: PW - 1.7, h: 0, line: { color: "EDEDED", width: 1 } });
+    });
+    footer(s);
+  };
+
+  const sipocSlide = (sipoc: NonNullable<OpModel["sipoc"]>) => {
+    const s = pptx.addSlide();
+    header(s, "SIPOC — cadrage du processus", "🔗");
+    const cols: Array<{ h: string; items: string[] }> = [
+      { h: "Suppliers", items: sipoc.suppliers ?? [] },
+      { h: "Inputs", items: sipoc.inputs ?? [] },
+      { h: "Process", items: sipoc.process ?? [] },
+      { h: "Outputs", items: sipoc.outputs ?? [] },
+      { h: "Customers", items: sipoc.customers ?? [] },
+    ];
+    const cw = (PW - 0.8 - 0.4 * 4) / 5;
+    cols.forEach((c, i) => {
+      const x = 0.4 + i * (cw + 0.4);
+      s.addShape("roundRect", { x, y: 1.1, w: cw, h: 5.85, rectRadius: 0.06, fill: { color: BRAND.orangeLight }, line: { color: BRAND.orange, width: 1 } });
+      s.addShape("rect", { x, y: 1.1, w: cw, h: 0.5, fill: { color: i === 2 ? BRAND.orangeDark : BRAND.orange } });
+      s.addText(c.h, { x, y: 1.1, w: cw, h: 0.5, fontSize: 12, bold: true, color: BRAND.white, align: "center", valign: "middle" });
+      const runs: Runs = [];
+      (c.items.length ? c.items : ["—"]).forEach((it) => pushRich(runs, it, { marker: MARK, color: BRAND.ink, fontSize: 10.5, spaceAfter: 5 }));
+      s.addText(runs, { x: x + 0.15, y: 1.75, w: cw - 0.3, h: 5.0, valign: "top", wrap: true, fit: "shrink" });
+    });
+    footer(s);
+  };
+
+  const valueStreamSlide = (vs: NonNullable<OpModel["valueStream"]>) => {
+    const s = pptx.addSlide();
+    header(s, "Chaîne de valeur — flux & goulot", "🏭");
+    bigCard(s);
+    sideAccent(s);
+    const steps = vs.steps ?? [];
+    const n = Math.max(steps.length, 1);
+    const areaX = 0.9, areaW = PW - 1.8, boxW = Math.min(2.2, (areaW - (n - 1) * 0.3) / n), gap = n > 1 ? (areaW - n * boxW) / (n - 1) : 0;
+    const boxY = 2.0, boxH = 1.2;
+    steps.forEach((st, i) => {
+      const x = areaX + i * (boxW + gap);
+      s.addShape("roundRect", { x, y: boxY, w: boxW, h: boxH, rectRadius: 0.06, fill: { color: VS_COLOR[st.type] ?? BRAND.grey }, line: { type: "none" } });
+      s.addText(trunc(st.nom, 40), { x: x + 0.1, y: boxY, w: boxW - 0.2, h: boxH, fontSize: 10, bold: true, color: BRAND.white, align: "center", valign: "middle", wrap: true, fit: "shrink" });
+      if (i < steps.length - 1) s.addText("›", { x: x + boxW, y: boxY, w: gap, h: boxH, fontSize: 20, color: BRAND.grey, align: "center", valign: "middle" });
+    });
+    // legend
+    (["VA", "NVA_necessaire", "NVA"] as const).forEach((k, i) => {
+      const lx = 0.9 + i * 3.2;
+      s.addShape("roundRect", { x: lx, y: 3.6, w: 0.28, h: 0.28, rectRadius: 0.04, fill: { color: VS_COLOR[k] }, line: { type: "none" } });
+      s.addText(VS_LABEL[k], { x: lx + 0.4, y: 3.57, w: 2.7, h: 0.34, fontSize: 11, color: BRAND.ink, valign: "middle" });
+    });
+    const runs: Runs = [];
+    if (vs.bottleneck) { runs.push({ text: "Goulot d'étranglement", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } }); pushRich(runs, vs.bottleneck, { color: BRAND.ink, fontSize: 12, spaceAfter: 10 }); }
+    if (vs.leadTimeNote) { runs.push({ text: "Délai vs temps utile", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } }); pushRich(runs, vs.leadTimeNote, { color: BRAND.ink, fontSize: 12 }); }
+    if (runs.length) s.addText(runs, { x: 0.9, y: 4.25, w: PW - 1.8, h: 2.4, valign: "top", wrap: true, fit: "shrink" });
+    footer(s);
+  };
+
   // ---------- 1. COVER ----------
   {
     const s = pptx.addSlide();
@@ -583,6 +660,14 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     (breakdown.length ? breakdown : ["—"]).forEach((it) => pushRich(runs, it, { marker: MARK, color: BRAND.ink, fontSize: 13, spaceAfter: 6 }));
     s.addText(runs, { x: 0.85, y: 1.35, w: PW - 1.7, h: 5.35, color: BRAND.ink, valign: "top", wrap: true, fit: "shrink" });
     footer(s);
+  }
+
+  // ---------- Operating-model layer (conditional — modele_operatoire+ projects) ----------
+  {
+    const om = synth.operatingModel;
+    if (om?.reviewMaturity?.length) reviewMaturitySlide(om.reviewMaturity);
+    if (om?.sipoc) sipocSlide(om.sipoc);
+    if (om?.valueStream?.steps?.length) valueStreamSlide(om.valueStream);
   }
 
   const c = synth.cahierDesCharges;

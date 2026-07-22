@@ -608,6 +608,15 @@ export interface ScopingSynthesis {
    * illustrative placeholders). Optional for backward compatibility.
    */
   kpis?: Array<{ libelle: string; cible: string }>;
+  /**
+   * Operating-model layer (Tier 2) — present ONLY when modele_operatoire+ projects
+   * collected the reView / SIPOC / value-stream blocks. Each sub-section optional.
+   */
+  operatingModel?: {
+    reviewMaturity?: Array<{ dimension: string; niveau: "faible" | "moyen" | "eleve"; soWhat: string }>;
+    sipoc?: { suppliers: string[]; inputs: string[]; process: string[]; outputs: string[]; customers: string[] };
+    valueStream?: { steps: Array<{ nom: string; type: "VA" | "NVA" | "NVA_necessaire" }>; bottleneck: string; leadTimeNote: string };
+  };
 }
 
 export async function generateScopingSynthesis(
@@ -633,11 +642,16 @@ COUCHE AUTOMATISABILITE (toujours produite): pour CHAQUE tache de "tachesAAutoma
 - "mode": "automatisable" (bon candidat automatisation complete), "assiste" (l'IA assiste, l'humain valide), ou "humain" (garder l'humain dans la boucle: jugement/relationnel/risque).
 Ajoute "automatisation.dataReadiness" (les donnees necessaires sont-elles disponibles, structurees, accessibles ? points de vigilance) et "automatisation.synthese" (1-2 phrases: par quoi commencer et pourquoi).
 INDICATEURS DE SUIVI: a partir des criteres de succes et de l'objectif, produis 3 a 4 KPIs mesurables dans "kpis" (chacun: "libelle" court + "cible" = valeur cible chiffree, ex: "-70%", "0", "< 2 j", "95%"). Ce sont les indicateurs a suivre apres le projet.
+COUCHE MODELE OPERATOIRE (optionnelle): si des reponses taggees "review" (etat actuel/maturite + ambition), "sipoc" (process/fournisseurs/entrees/sorties/clients) ou "vsm" (goulot, delai vs temps utile) existent, produis la clef "operatingModel"; sinon NE L'INCLUS PAS.
+- "operatingModel.reviewMaturity": une matrice etat actuel facon reView, 4 a 6 dimensions (ex: Competences, Outils, Standardisation, Mesure, Culture d'amelioration), chacune avec "niveau" (faible|moyen|eleve) et "soWhat" (l'implication concrete).
+- "operatingModel.sipoc": {suppliers[], inputs[], process[] (3-5 etapes), outputs[], customers[]} a partir des reponses SIPOC.
+- "operatingModel.valueStream": {steps:[{nom, type}], bottleneck, leadTimeNote}. "type" vaut exactement VA (valeur ajoutee), NVA (gaspillage a eliminer) ou NVA_necessaire (non-valeur mais requis).
 N'utilise AUCUN formatage Markdown dans les valeurs (pas de **, pas de #, pas de backticks): texte brut uniquement.
 Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
 {"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
  "automatisation":{"taches":[{"tache":"...","volume":"moyen","standardisation":"elevee","nature":"regles","score":80,"mode":"automatisable"}],"dataReadiness":"...","synthese":"..."},
  "kpis":[{"libelle":"Temps de saisie","cible":"-70%"},{"libelle":"Double saisie","cible":"0"}],
+ "operatingModel":{"reviewMaturity":[{"dimension":"Standardisation","niveau":"faible","soWhat":"..."}],"sipoc":{"suppliers":["..."],"inputs":["..."],"process":["..."],"outputs":["..."],"customers":["..."]},"valueStream":{"steps":[{"nom":"...","type":"NVA"}],"bottleneck":"...","leadTimeNote":"..."}},
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
  "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."},
  "strategic":{"steeple":{"social":"...","technological":"...","economic":"...","environmental":"...","political":"...","legal":"...","ethical":"..."},"swot":{"strengths":["..."],"weaknesses":["..."],"opportunities":["..."],"threats":["..."]},"hoshin":{"objective":"...","trueNorth":"...","breakthroughs":["..."],"alignment":"..."},"sbs":{"valueStream":"delivery","rationale":"..."}}}`;
