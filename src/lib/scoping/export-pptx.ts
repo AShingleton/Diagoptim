@@ -20,6 +20,9 @@ const CATS6 = [
   { key: "environment", name: "Milieu", emoji: "🌐", color: "2C5CC4" },
 ] as const;
 
+const TRUE_NORTH_LABEL: Record<string, string> = { human: "Développement humain", quality: "Qualité", delivery: "Ponctualité", cost: "Coût" };
+const VALUE_STREAM_LABEL: Record<string, string> = { demand: "Demand", delivery: "Delivery", development: "Development", support: "Support" };
+
 export async function synthesisToPptx(synth: ScopingSynthesis, projectName: string): Promise<Buffer> {
   const pptx = new pptxgen();
   pptx.layout = "LAYOUT_WIDE"; // 13.33in x 7.5in
@@ -343,6 +346,100 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     footer(s);
   };
 
+  // ---------- Strategic slides (SP-STRAT-4) — rendered only when collected ----------
+  type Steeple = NonNullable<NonNullable<ScopingSynthesis["strategic"]>["steeple"]>;
+  type Swot = NonNullable<NonNullable<ScopingSynthesis["strategic"]>["swot"]>;
+  type Hoshin = NonNullable<NonNullable<ScopingSynthesis["strategic"]>["hoshin"]>;
+  type Sbs = NonNullable<NonNullable<ScopingSynthesis["strategic"]>["sbs"]>;
+
+  const steepleSlide = (st: Steeple) => {
+    const s = pptx.addSlide();
+    header(s, "Contexte STEEPLE", "🌍");
+    bigCard(s);
+    sideAccent(s);
+    const rows: Array<[string, string]> = [
+      ["Société", st.social], ["Technologie", st.technological], ["Économie", st.economic],
+      ["Environnement", st.environmental], ["Politique", st.political], ["Légal", st.legal], ["Éthique", st.ethical],
+    ];
+    const runs: Runs = [];
+    rows.forEach(([label, text]) => { if (text) pushRich(runs, `**${label}** — ${text}`, { color: BRAND.ink, fontSize: 12.5, spaceAfter: 7 }); });
+    s.addText(runs.length ? runs : [{ text: "—", options: { color: BRAND.grey } }], { x: 0.85, y: 1.35, w: PW - 1.7, h: 5.35, valign: "top", wrap: true, fit: "shrink" });
+    footer(s);
+  };
+
+  const swotSlide = (sw: Swot) => {
+    const s = pptx.addSlide();
+    header(s, "SWOT / TOWS", "🎯");
+    const cw = (PW - 0.8 - 0.4) / 2;
+    const areaY = 1.05, areaH = 5.9, gap = 0.35;
+    const rowH = (areaH - gap) / 2;
+    const quads = [
+      { h: "Forces", items: sw.strengths, color: "2FB6A3", cx: 0.4, cy: areaY },
+      { h: "Faiblesses", items: sw.weaknesses, color: "E8542F", cx: 0.4 + cw + 0.4, cy: areaY },
+      { h: "Opportunités", items: sw.opportunities, color: "3D9BE9", cx: 0.4, cy: areaY + rowH + gap },
+      { h: "Menaces", items: sw.threats, color: "C0392B", cx: 0.4 + cw + 0.4, cy: areaY + rowH + gap },
+    ];
+    quads.forEach((q) => {
+      s.addShape("roundRect", { x: q.cx, y: q.cy, w: cw, h: rowH, rectRadius: 0.06, fill: { color: BRAND.orangeLight }, line: { color: q.color, width: 1.25 } });
+      s.addShape("rect", { x: q.cx, y: q.cy, w: cw, h: 0.42, fill: { color: q.color } });
+      s.addText(q.h, { x: q.cx + 0.18, y: q.cy, w: cw - 0.36, h: 0.42, fontSize: 13, bold: true, color: BRAND.white, valign: "middle" });
+      const runs: Runs = [];
+      ((q.items && q.items.length ? q.items : ["—"])).forEach((it) => pushRich(runs, it, { marker: MARK, color: BRAND.ink, fontSize: 11, spaceAfter: 3 }));
+      s.addText(runs, { x: q.cx + 0.22, y: q.cy + 0.55, w: cw - 0.44, h: rowH - 0.7, fontSize: 11, valign: "top", wrap: true, fit: "shrink" });
+    });
+    footer(s);
+  };
+
+  const hoshinSlide = (h: Hoshin) => {
+    const s = pptx.addSlide();
+    header(s, "Alignement stratégique", "🧭");
+    bigCard(s);
+    sideAccent(s);
+    const runs: Runs = [];
+    runs.push({ text: "Objectif stratégique (12-18 mois)", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } });
+    pushRich(runs, h.objective || "—", { color: BRAND.ink, fontSize: 15, spaceAfter: 10 });
+    const tn = TRUE_NORTH_LABEL[h.trueNorth] ?? h.trueNorth;
+    if (tn) { runs.push({ text: "Indicateur True North visé", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 2 } }); pushRich(runs, tn, { color: BRAND.ink, fontSize: 14, spaceAfter: 10 }); }
+    runs.push({ text: "Percées prioritaires", options: { bold: true, fontSize: 13, color: BRAND.orangeDark, breakLine: true, paraSpaceAfter: 3 } });
+    const bk = Array.isArray(h.breakthroughs) ? h.breakthroughs : [];
+    (bk.length ? bk : ["—"]).forEach((b) => pushRich(runs, b, { marker: MARK, color: BRAND.ink, fontSize: 13, spaceAfter: 4 }));
+    if (h.alignment) { runs.push({ text: "", options: { breakLine: true, paraSpaceAfter: 6 } }); pushRich(runs, `**Lien projet ↔ stratégie :** ${h.alignment}`, { color: BRAND.grey, fontSize: 12, spaceAfter: 2 }); }
+    s.addText(runs, { x: 0.85, y: 1.35, w: PW - 1.7, h: 5.35, valign: "top", wrap: true, fit: "shrink" });
+    footer(s);
+  };
+
+  const sbsSlide = (sbs: Sbs, trueNorth?: string) => {
+    const s = pptx.addSlide();
+    header(s, "Positionnement SBS", "🏗️");
+    bigCard(s);
+    sideAccent(s);
+    // True North row (4 indicators, highlight the targeted one)
+    s.addText("True North", { x: 0.85, y: 1.3, w: 3, h: 0.3, fontSize: 12, bold: true, color: BRAND.orangeDark });
+    const tnKeys = ["human", "quality", "delivery", "cost"];
+    const tnW = (PW - 1.7 - 0.9) / 4;
+    tnKeys.forEach((k, i) => {
+      const on = k === trueNorth;
+      const tx = 0.85 + i * (tnW + 0.3);
+      s.addShape("roundRect", { x: tx, y: 1.65, w: tnW, h: 0.7, rectRadius: 0.06, fill: { color: on ? BRAND.orange : "FFFFFF" }, line: { color: BRAND.orange, width: 1 } });
+      s.addText(TRUE_NORTH_LABEL[k], { x: tx + 0.1, y: 1.65, w: tnW - 0.2, h: 0.7, fontSize: 11, bold: on, color: on ? BRAND.white : BRAND.ink, align: "center", valign: "middle" });
+    });
+    // Value streams row (highlight the project's)
+    s.addText("Chaîne de valeur du projet", { x: 0.85, y: 2.75, w: 5, h: 0.3, fontSize: 12, bold: true, color: BRAND.orangeDark });
+    const vs = ["demand", "delivery", "development", "support"];
+    vs.forEach((k, i) => {
+      const on = k === sbs.valueStream;
+      const tx = 0.85 + i * (tnW + 0.3);
+      s.addShape("roundRect", { x: tx, y: 3.1, w: tnW, h: 0.95, rectRadius: 0.08, fill: { color: on ? BRAND.orange : "FFFFFF" }, line: { color: on ? BRAND.orange : "B9C2CC", width: on ? 1.5 : 1 } });
+      s.addText(VALUE_STREAM_LABEL[k], { x: tx + 0.1, y: 3.1, w: tnW - 0.2, h: 0.95, fontSize: 13, bold: true, color: on ? BRAND.white : BRAND.grey, align: "center", valign: "middle" });
+    });
+    if (sbs.rationale) {
+      const runs: Runs = [];
+      pushRich(runs, `**Pourquoi :** ${sbs.rationale}`, { color: BRAND.ink, fontSize: 12.5, spaceAfter: 2 });
+      s.addText(runs, { x: 0.85, y: 4.4, w: PW - 1.7, h: 2.3, valign: "top", wrap: true, fit: "shrink" });
+    }
+    footer(s);
+  };
+
   // ---------- 1. COVER ----------
   {
     const s = pptx.addSlide();
@@ -352,7 +449,18 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     s.addShape("rect", { x: (PW - 2.6) / 2, y: 3.05, w: 2.6, h: 0.06, fill: { color: BRAND.white } });
     s.addText("Cahier des charges", { x: 0.5, y: 3.25, w: PW - 1, h: 1.0, fontSize: 44, bold: true, color: BRAND.white, align: "center" });
     s.addText(`Automatisation & agent IA — ${trunc(projectName, 60)}`, { x: 0.5, y: 4.35, w: PW - 1, h: 0.7, fontSize: 22, color: BRAND.orangeLight, align: "center" });
+    const tnLabel = synth.strategic?.hoshin?.trueNorth ? TRUE_NORTH_LABEL[synth.strategic.hoshin.trueNorth] : null;
+    if (tnLabel) s.addText(`True North visé : ${tnLabel}`, { x: 0.5, y: 5.15, w: PW - 1, h: 0.4, fontSize: 14, italic: true, color: BRAND.white, align: "center" });
     s.addText("EmbraceIA", { x: 0.5, y: 6.6, w: PW - 1, h: 0.4, fontSize: 13, bold: true, color: BRAND.white, align: "center" });
+  }
+
+  // ---------- Strategic layer (conditional — only when a direction respondent supplied it) ----------
+  {
+    const strat = synth.strategic;
+    if (strat?.steeple) steepleSlide(strat.steeple);
+    if (strat?.swot) swotSlide(strat.swot);
+    if (strat?.hoshin) hoshinSlide(strat.hoshin);
+    if (strat?.sbs) sbsSlide(strat.sbs, strat.hoshin?.trueNorth);
   }
 
   // ---------- 2. A3 — Boxes 1-3 (Contexte / Problème / Objectif) on one slide, labelled ----------

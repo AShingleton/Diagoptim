@@ -156,6 +156,33 @@ export function synthesisToPdf(synth: ScopingSynthesis, projectName: string): Ui
   heading("A3 - Analyse des causes racines");
   prose(synth.a3.rootCauseAnalysis);
 
+  // --- Strategic layer (optional; rendered only when collected) ---
+  const TN: Record<string, string> = { human: "Developpement humain", quality: "Qualite", delivery: "Ponctualite", cost: "Cout" };
+  const VS: Record<string, string> = { demand: "Demand", delivery: "Delivery", development: "Development", support: "Support" };
+  const strat = synth.strategic;
+  if (strat?.hoshin) {
+    heading("Alignement strategique (Hoshin)");
+    paragraph("Objectif strategique (12-18 mois) : " + (strat.hoshin.objective || "-"));
+    if (strat.hoshin.trueNorth) paragraph("Indicateur True North vise : " + (TN[strat.hoshin.trueNorth] ?? strat.hoshin.trueNorth));
+    if (strat.hoshin.breakthroughs?.length) { subHeading("Percees prioritaires"); strat.hoshin.breakthroughs.forEach(bullet); }
+    if (strat.hoshin.alignment) paragraph("Lien projet / strategie : " + strat.hoshin.alignment);
+  }
+  if (strat?.steeple) {
+    heading("Contexte STEEPLE");
+    ([["Societe", strat.steeple.social], ["Technologie", strat.steeple.technological], ["Economie", strat.steeple.economic], ["Environnement", strat.steeple.environmental], ["Politique", strat.steeple.political], ["Legal", strat.steeple.legal], ["Ethique", strat.steeple.ethical]] as Array<[string, string]>)
+      .forEach(([l, t]) => { if (t) { subHeading(l); paragraph(t); } });
+  }
+  if (strat?.swot) {
+    heading("SWOT / TOWS");
+    ([["Forces", strat.swot.strengths], ["Faiblesses", strat.swot.weaknesses], ["Opportunites", strat.swot.opportunities], ["Menaces", strat.swot.threats]] as Array<[string, string[]]>)
+      .forEach(([l, arr]) => { if (arr?.length) { subHeading(l); arr.forEach(bullet); } });
+  }
+  if (strat?.sbs) {
+    heading("Positionnement SBS");
+    paragraph("Chaine de valeur : " + (VS[strat.sbs.valueStream] ?? strat.sbs.valueStream));
+    if (strat.sbs.rationale) paragraph(strat.sbs.rationale);
+  }
+
   // --- Ishikawa 6M ---
   heading("Ishikawa 6M - " + synth.ishikawa.problem, 12);
   const causes = synth.ishikawa.causes as Record<string, string[]>;
