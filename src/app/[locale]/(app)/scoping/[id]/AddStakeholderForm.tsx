@@ -17,6 +17,12 @@ export function AddStakeholderForm({
       <input name="fullName" required placeholder="Nom complet" className={inputCls} />
       <input name="email" type="email" required placeholder="Email" className={inputCls} />
       <input name="roleLabel" required placeholder="Rôle (ex : Vendeuse, Gérant)" className={inputCls} />
+      <select name="roleLevel" defaultValue="auto" className={inputCls} title="Niveau — détecté automatiquement d'après le rôle, corrigez si besoin">
+        <option value="auto">Niveau : détecté automatiquement</option>
+        <option value="terrain">Terrain (opérationnel)</option>
+        <option value="encadrement">Encadrement</option>
+        <option value="direction">Direction</option>
+      </select>
       <select name="hierarchyParentId" defaultValue="" className={inputCls}>
         <option value="">Rattachement hiérarchique (optionnel)</option>
         {parents.map((p) => (<option key={p.id} value={p.id}>Sous la responsabilité de {p.fullName}</option>))}

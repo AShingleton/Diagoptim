@@ -5,9 +5,9 @@ describe('addStakeholder', () => {
   it('creates a pending stakeholder', async () => {
     const create = vi.fn().mockResolvedValue({ id: 's1' });
     const prisma = { scopingStakeholder: { create } } as never;
-    const r = await addStakeholder(prisma, { projectId: 'p1', fullName: 'Marie', email: 'marie@x.fr', roleLabel: 'Vendeuse' });
+    const r = await addStakeholder(prisma, { projectId: 'p1', fullName: 'Marie', email: 'marie@x.fr', roleLabel: 'Vendeuse', roleLevel: 'terrain' });
     expect(r).toEqual({ id: 's1' });
-    expect(create).toHaveBeenCalledWith({ data: { projectId: 'p1', fullName: 'Marie', email: 'marie@x.fr', roleLabel: 'Vendeuse', hierarchyParentId: null, inviteStatus: 'pending' } });
+    expect(create).toHaveBeenCalledWith({ data: { projectId: 'p1', fullName: 'Marie', email: 'marie@x.fr', roleLabel: 'Vendeuse', roleLevel: 'terrain', hierarchyParentId: null, inviteStatus: 'pending' } });
   });
 });
 

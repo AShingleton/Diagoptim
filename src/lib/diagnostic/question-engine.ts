@@ -25,10 +25,13 @@ import {
   type QuestionContext,
   type DiagnosticPhaseType,
   type SubscriptionTier,
+  type ProjectAltitude,
+  type RoleLevel,
   QUESTION_TREE,
   TOTAL_QUESTION_COUNT,
   getPhasesForType,
   planMeetsRequirement,
+  meetsGating,
 } from './decision-tree';
 import {
   analyzeWastes,
@@ -143,6 +146,10 @@ export interface DiagnosticContext {
   answersSinceLastInsight: number;
   /** Total answers count */
   totalAnswerCount: number;
+  /** Scoping project altitude for gating (default 'strategique' = gate nothing). */
+  scopingAltitude: ProjectAltitude;
+  /** Respondent role level for gating (default 'direction' = gate nothing). */
+  scopingRoleLevel: RoleLevel;
 }
 
 // ============================================================================
@@ -598,6 +605,16 @@ export class QuestionEngine {
     const plan = (diagnostic.company.user.subscription?.plan ?? 'free') as SubscriptionTier;
     const locale = (diagnostic.company.user.locale ?? 'fr') as 'fr' | 'en';
 
+    // Scoping gating: a diagnostic tied to a stakeholder carries the project altitude
+    // + the respondent's role level. When absent (non-scoping diagnostic), default to
+    // the top of both scales so NOTHING is gated out.
+    const stakeholder = await this.prisma.scopingStakeholder.findUnique({
+      where: { diagnosticId },
+      select: { roleLevel: true, project: { select: { altitude: true } } },
+    });
+    const scopingAltitude = (stakeholder?.project.altitude ?? 'strategique') as ProjectAltitude;
+    const scopingRoleLevel = (stakeholder?.roleLevel ?? 'direction') as RoleLevel;
+
     // Count answers since last insight (we generate insights every BLOCK_INSIGHT_INTERVAL answers)
     const answersSinceLastInsight =
       diagnostic.answers.length % QuestionEngine.BLOCK_INSIGHT_INTERVAL;
@@ -621,6 +638,8 @@ export class QuestionEngine {
       answeredQuestionIds,
       answersSinceLastInsight,
       totalAnswerCount: diagnostic.answers.length,
+      scopingAltitude,
+      scopingRoleLevel,
     };
   }
 
@@ -640,6 +659,10 @@ export class QuestionEngine {
 
     // Custom skip condition
     if (question.skipIf && question.skipIf(questionCtx)) return true;
+
+    // Strategic gating (SP-STRAT-1): skip questions whose altitude/role thresholds
+    // aren't met by this project's altitude and this respondent's role level.
+    if (!meetsGating(question, context.scopingAltitude, context.scopingRoleLevel)) return true;
 
     return false;
   }

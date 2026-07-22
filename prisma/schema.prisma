@@ -432,6 +432,10 @@ model ScopingProject {
   createdByUserId     String   @map("created_by_user_id") @db.Uuid
   requiredRespondents Int      @default(1) @map("required_respondents")
   status              String   @default("draft") // draft | collecting | ready | synthesized
+  // Step 0 routing (SP-STRAT-1): project altitude gates which tool blocks are served.
+  altitude            String   @default("tache") // tache | processus | modele_operatoire | strategique
+  valueStream         String   @default("none") @map("value_stream") // demand | delivery | development | support | none  (SBS)
+  strategicObjective  String?  @map("strategic_objective") // Hoshin: top-level objective the roadmap derives from
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -451,6 +455,7 @@ model ScopingStakeholder {
   fullName          String   @map("full_name")
   email             String
   roleLabel         String   @map("role_label")
+  roleLevel         String   @default("terrain") @map("role_level") // terrain | encadrement | direction (SP-STRAT-1 gating)
   hierarchyParentId String?  @map("hierarchy_parent_id") @db.Uuid
   inviteStatus      String   @default("pending") @map("invite_status") // pending|invited|started|completed
   respondentUserId  String?  @map("respondent_user_id") @db.Uuid

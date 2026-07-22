@@ -34,6 +34,7 @@ export interface AddStakeholderInput {
   fullName: string;
   email: string;
   roleLabel: string;
+  roleLevel: 'terrain' | 'encadrement' | 'direction';
   hierarchyParentId?: string | null;
 }
 
@@ -44,6 +45,7 @@ export async function addStakeholder(prisma: PrismaClient, input: AddStakeholder
       fullName: input.fullName,
       email: input.email,
       roleLabel: input.roleLabel,
+      roleLevel: input.roleLevel,
       hierarchyParentId: input.hierarchyParentId ?? null,
       inviteStatus: 'pending',
     },

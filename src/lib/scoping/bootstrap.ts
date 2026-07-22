@@ -19,6 +19,7 @@ export interface CreateProjectWithCompanyInput {
   projectName: string;
   ownerType: "consultant" | "client_lead";
   requiredRespondents: number;
+  altitude: "tache" | "processus" | "modele_operatoire" | "strategique";
 }
 
 /**
@@ -52,6 +53,7 @@ export async function createProjectWithCompany(
       createdByUserId: input.userId,
       requiredRespondents: input.requiredRespondents,
       status: "draft",
+      altitude: input.altitude,
     },
   });
 }

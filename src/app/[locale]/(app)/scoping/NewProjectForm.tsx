@@ -25,6 +25,16 @@ export function NewProjectForm({
         <label className="text-sm font-medium">Entreprise cliente</label>
         <input name="companyName" required placeholder="ex: Boulangerie Martin" className={inputCls} />
       </div>
+      <div className="grid gap-1">
+        <label className="text-sm font-medium">Nature du projet</label>
+        <select name="altitude" defaultValue="tache" className={inputCls}>
+          <option value="tache">Tâche / poste — automatiser une tâche précise</option>
+          <option value="processus">Processus / service — améliorer un processus</option>
+          <option value="modele_operatoire">Modèle opératoire — refondre une chaîne de valeur</option>
+          <option value="strategique">Stratégique — transformation / nouveau modèle</option>
+        </select>
+        <p className="text-xs text-muted-foreground">Détermine quels outils (STEEPLE, Hoshin, SWOT…) seront proposés, et à qui.</p>
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="grid flex-1 gap-1">
           <label className="text-sm font-medium">Qui pilote</label>

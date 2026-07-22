@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/supabase/server";
 import { canManageProject, addStakeholder } from "@/lib/scoping/service";
+import { deduceRoleLevel, type RoleLevel } from "@/lib/diagnostic/decision-tree";
 import { inviteStakeholder } from "@/lib/scoping/invite";
 import { runSynthesis } from "@/lib/scoping/synthesis";
 import { sendEmail } from "@/lib/notifications/email";
@@ -22,8 +23,13 @@ export async function addStakeholderAction(projectId: string, formData: FormData
   const email = String(formData.get("email") ?? "").trim();
   const roleLabel = String(formData.get("roleLabel") ?? "").trim();
   const hp = String(formData.get("hierarchyParentId") ?? "").trim();
+  // Role level: explicit choice wins; "auto" (or absent) falls back to the heuristic.
+  const rawLevel = String(formData.get("roleLevel") ?? "auto");
+  const roleLevel: RoleLevel = (["terrain", "encadrement", "direction"] as const).includes(rawLevel as RoleLevel)
+    ? (rawLevel as RoleLevel)
+    : deduceRoleLevel(roleLabel);
   if (!fullName || !email || !roleLabel) throw new Error("Champs requis manquants");
-  await addStakeholder(prisma, { projectId, fullName, email, roleLabel, hierarchyParentId: hp || null });
+  await addStakeholder(prisma, { projectId, fullName, email, roleLabel, roleLevel, hierarchyParentId: hp || null });
   revalidatePath(`/fr/scoping/${projectId}`);
   revalidatePath(`/en/scoping/${projectId}`);
 }

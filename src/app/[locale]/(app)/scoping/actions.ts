@@ -20,6 +20,11 @@ export async function createProjectAction(formData: FormData): Promise<void> {
     1,
     Math.min(20, parseInt(String(formData.get("requiredRespondents") ?? "1"), 10) || 1),
   );
+  const ALTITUDES = ["tache", "processus", "modele_operatoire", "strategique"] as const;
+  const rawAltitude = String(formData.get("altitude") ?? "tache");
+  const altitude = (ALTITUDES as readonly string[]).includes(rawAltitude)
+    ? (rawAltitude as (typeof ALTITUDES)[number])
+    : "tache";
   if (!companyName || !projectName) throw new Error("Champs requis manquants");
 
   await createProjectWithCompany(prisma, {
@@ -28,6 +33,7 @@ export async function createProjectAction(formData: FormData): Promise<void> {
     projectName,
     ownerType,
     requiredRespondents,
+    altitude,
   });
   revalidatePath("/fr/scoping");
   revalidatePath("/en/scoping");

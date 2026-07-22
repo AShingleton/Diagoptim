@@ -84,6 +84,55 @@ export interface QuestionNode {
   hintEn?: string;
   /** Linked waste category for scoring */
   wasteCategory?: WasteCategoryId;
+  /** Minimum project altitude required to serve this question (SP-STRAT-1 gating). */
+  altitudeMin?: ProjectAltitude;
+  /** Minimum respondent role level required to serve this question (SP-STRAT-1 gating). */
+  roleMin?: RoleLevel;
+}
+
+// ============================================================================
+// STRATEGIC GATING (SP-STRAT-1): project altitude × respondent role level
+// ============================================================================
+
+/** Nature of the project, chosen at Step 0 — gates which tool blocks are served. */
+export type ProjectAltitude = 'tache' | 'processus' | 'modele_operatoire' | 'strategique';
+/** Altitude of the respondent — a strategic tool never goes to a frontline worker. */
+export type RoleLevel = 'terrain' | 'encadrement' | 'direction';
+
+export const ALTITUDE_RANK: Record<ProjectAltitude, number> = {
+  tache: 0,
+  processus: 1,
+  modele_operatoire: 2,
+  strategique: 3,
+};
+export const ROLE_RANK: Record<RoleLevel, number> = {
+  terrain: 0,
+  encadrement: 1,
+  direction: 2,
+};
+
+/** True when the given altitude/role meets a question's minimum thresholds. */
+export function meetsGating(
+  q: Pick<QuestionNode, 'altitudeMin' | 'roleMin'>,
+  altitude: ProjectAltitude,
+  role: RoleLevel,
+): boolean {
+  if (q.altitudeMin && ALTITUDE_RANK[altitude] < ALTITUDE_RANK[q.altitudeMin]) return false;
+  if (q.roleMin && ROLE_RANK[role] < ROLE_RANK[q.roleMin]) return false;
+  return true;
+}
+
+/**
+ * Heuristic mapping of a free-text role label to a role level. The sponsor can
+ * override it; this is only the default so a "Gérant" isn't treated as frontline.
+ */
+export function deduceRoleLevel(roleLabel: string): RoleLevel {
+  const r = (roleLabel || '').toLowerCase();
+  const direction = /\b(dg|d\.?g\.?|directeur|directrice|dirigeant|g[ée]rant|g[ée]rante|pr[ée]sident|pdg|ceo|cto|cfo|coo|fondateur|fondatrice|patron|associ[ée]|owner|head of|chief)\b/;
+  const encadrement = /\b(responsable|manager|chef|cheffe|superviseur|coordinateur|coordinatrice|lead|encadrant|adjoint|supervisor)\b/;
+  if (direction.test(r)) return 'direction';
+  if (encadrement.test(r)) return 'encadrement';
+  return 'terrain';
 }
 
 // ============================================================================
