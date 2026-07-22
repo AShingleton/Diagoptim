@@ -573,6 +573,17 @@ export interface ScopingSynthesis {
     priorisation: string;
     criteresDeRecette: string;
   };
+  /**
+   * Strategic layer (SP-STRAT-3) — present ONLY when direction-level respondents
+   * answered the gated STEEPLE / Hoshin / SWOT / SBS blocks. Each sub-section is
+   * optional so the exports render nothing when it wasn't collected.
+   */
+  strategic?: {
+    steeple?: { social: string; technological: string; economic: string; environmental: string; political: string; legal: string; ethical: string };
+    swot?: { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
+    hoshin?: { objective: string; trueNorth: string; breakthroughs: string[]; alignment: string };
+    sbs?: { valueStream: string; rationale: string };
+  };
 }
 
 export async function generateScopingSynthesis(
@@ -585,11 +596,17 @@ A partir des avis de PLUSIEURS parties prenantes d'une PME (chacun avec son role
 Regles: reste fidele aux avis (ne rien inventer), croise les points de vue (fais ressortir convergences et divergences par role), va jusqu'a l'analyse des causes racines.
 Les reponses des repondants comportent une caracterisation 5W2H (Quoi/Quand/Pourquoi/Combien) du processus cible: sers-t'en pour preciser le problemStatement (case 2 de l'A3) et le goal / objectif (case 3).
 Les reponses sondent aussi les 8 gaspillages Lean (TIMWOODS: Transport, Stocks/Inventory, Mouvements/Motion, Attentes/Waiting, Surproduction/Overproduction, Sur-traitement/Overprocessing, Defauts/Defects, Competences/Skills): identifie explicitement quels gaspillages sont presents et refletes-les dans le rootCauseAnalysis (case 4 de l'A3) et dans les causes de l'Ishikawa.
+COUCHE STRATEGIQUE (optionnelle): certains repondants de niveau direction ont pu repondre a des blocs taggues "steeple" (Societe/Technologie/Economie/Environnement/Politique/Legal/Ethique), "hoshin" (objectif strategique 12-18 mois, indicateur True North vise, percees prioritaires), "swot" (Forces/Faiblesses/Opportunites/Menaces) et "sbs" (chaine de valeur SBS: demand/delivery/development/support).
+- Si de telles reponses existent, produis la clef "strategic" avec les sous-sections correspondantes; sinon N'INCLUS PAS du tout la clef "strategic".
+- Utilise l'objectif Hoshin pour PRECISER le goal (case 3 de l'A3) et pour ORDONNER la priorisation de facon descendante (la roadmap doit servir l'objectif strategique). "alignment" = une phrase reliant explicitement le projet a l'objectif strategique et a l'indicateur True North.
+- Utilise le contexte STEEPLE pour enrichir le background (case 1 de l'A3).
+- "sbs.valueStream" doit valoir exactement l'une de: demand, delivery, development, support.
 N'utilise AUCUN formatage Markdown dans les valeurs (pas de **, pas de #, pas de backticks): texte brut uniquement.
 Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
 {"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
- "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."}}`;
+ "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."},
+ "strategic":{"steeple":{"social":"...","technological":"...","economic":"...","environmental":"...","political":"...","legal":"...","ethical":"..."},"swot":{"strengths":["..."],"weaknesses":["..."],"opportunities":["..."],"threats":["..."]},"hoshin":{"objective":"...","trueNorth":"...","breakthroughs":["..."],"alignment":"..."},"sbs":{"valueStream":"delivery","rationale":"..."}}}`;
   const userMessage = JSON.stringify({ projet: projectName, entreprise: companyName, parties_prenantes: respondents });
   // Haiku 4.5: this is a long structured generation (~55s on Sonnet -> Vercel timeout);
   // Haiku keeps it ~20s, safely within the function budget.
