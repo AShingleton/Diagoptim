@@ -602,6 +602,12 @@ export interface ScopingSynthesis {
     dataReadiness: string;
     synthese: string;
   };
+  /**
+   * Tracking KPIs derived from the project's success criteria — real indicators
+   * with a target value, used for the monitoring-dashboard tiles (replaces the
+   * illustrative placeholders). Optional for backward compatibility.
+   */
+  kpis?: Array<{ libelle: string; cible: string }>;
 }
 
 export async function generateScopingSynthesis(
@@ -626,10 +632,12 @@ COUCHE AUTOMATISABILITE (toujours produite): pour CHAQUE tache de "tachesAAutoma
 - "score" (0-100) = automatisabilite globale (eleve si volume eleve + standardisation elevee + regles).
 - "mode": "automatisable" (bon candidat automatisation complete), "assiste" (l'IA assiste, l'humain valide), ou "humain" (garder l'humain dans la boucle: jugement/relationnel/risque).
 Ajoute "automatisation.dataReadiness" (les donnees necessaires sont-elles disponibles, structurees, accessibles ? points de vigilance) et "automatisation.synthese" (1-2 phrases: par quoi commencer et pourquoi).
+INDICATEURS DE SUIVI: a partir des criteres de succes et de l'objectif, produis 3 a 4 KPIs mesurables dans "kpis" (chacun: "libelle" court + "cible" = valeur cible chiffree, ex: "-70%", "0", "< 2 j", "95%"). Ce sont les indicateurs a suivre apres le projet.
 N'utilise AUCUN formatage Markdown dans les valeurs (pas de **, pas de #, pas de backticks): texte brut uniquement.
 Reponds STRICTEMENT en JSON conforme a ce schema (aucun texte hors JSON):
 {"a3":{"background":"...","problemStatement":"...","goal":"...","rootCauseAnalysis":"..."},
  "automatisation":{"taches":[{"tache":"...","volume":"moyen","standardisation":"elevee","nature":"regles","score":80,"mode":"automatisable"}],"dataReadiness":"...","synthese":"..."},
+ "kpis":[{"libelle":"Temps de saisie","cible":"-70%"},{"libelle":"Double saisie","cible":"0"}],
  "ishikawa":{"problem":"...","causes":{"man":["..."],"machine":["..."],"method":["..."],"material":["..."],"measurement":["..."],"environment":["..."]},"rootCause":"..."},
  "cahierDesCharges":{"contexte":"...","perimetre":"...","tachesAAutomatiser":[{"tache":"...","frequence":"...","priorite":"..."}],"casUsageAgentIA":[{"processus":"...","usage":"...","causesTraitees":"..."}],"donneesEtIntegrations":"...","contraintesEtRisques":"...","pointsDeVueParRole":[{"role":"...","synthese":"..."}],"priorisation":"...","criteresDeRecette":"..."},
  "strategic":{"steeple":{"social":"...","technological":"...","economic":"...","environmental":"...","political":"...","legal":"...","ethical":"..."},"swot":{"strengths":["..."],"weaknesses":["..."],"opportunities":["..."],"threats":["..."]},"hoshin":{"objective":"...","trueNorth":"...","breakthroughs":["..."],"alignment":"..."},"sbs":{"valueStream":"delivery","rationale":"..."}}}`;

@@ -317,32 +317,37 @@ export async function synthesisToPptx(synth: ScopingSynthesis, projectName: stri
     footer(s);
   };
 
-  /** Suggested KPI monitoring dashboard — a visual mockup (stat tiles + 2 charts). */
+  /** KPI monitoring dashboard — stat tiles from the real success KPIs (+ 2 illustrative charts). */
+  const TILE_COLORS = [BRAND.orange, "2FB6A3", "E8542F", "3D9BE9"];
   const dashboardSlide = () => {
     const s = pptx.addSlide();
     header(s, "Tableau de bord de suivi — proposition", "📊");
-    const tiles = [
-      { value: "-70%", label: "Temps de saisie", color: BRAND.orange },
-      { value: "0", label: "Double saisie", color: "2FB6A3" },
-      { value: "-45%", label: "Ruptures de stock", color: "E8542F" },
-      { value: "95%", label: "Adoption équipe", color: "3D9BE9" },
-    ];
+    const realKpis = synth.kpis?.length ? synth.kpis.slice(0, 4) : null;
+    const tiles = (realKpis
+      ? realKpis.map((k, i) => ({ value: stripMarkdown(k.cible || "—"), label: stripMarkdown(k.libelle || ""), color: TILE_COLORS[i % TILE_COLORS.length] }))
+      : [
+          { value: "-70%", label: "Temps de saisie", color: BRAND.orange },
+          { value: "0", label: "Double saisie", color: "2FB6A3" },
+          { value: "-45%", label: "Ruptures de stock", color: "E8542F" },
+          { value: "95%", label: "Adoption équipe", color: "3D9BE9" },
+        ]);
+    const nTiles = Math.max(tiles.length, 1);
     const gap = 0.3;
-    const tileW = (PW - 0.8 - gap * 3) / 4;
+    const tileW = (PW - 0.8 - gap * (nTiles - 1)) / nTiles;
     const tileY = 1.2, tileH = 1.55;
     tiles.forEach((t, i) => {
       const tx = 0.4 + i * (tileW + gap);
       s.addShape("roundRect", { x: tx, y: tileY, w: tileW, h: tileH, rectRadius: 0.08, fill: { color: "FFFFFF" }, line: { color: t.color, width: 1.5 } });
       s.addShape("rect", { x: tx, y: tileY, w: 0.12, h: tileH, fill: { color: t.color } });
-      s.addText(t.value, { x: tx + 0.2, y: tileY + 0.12, w: tileW - 0.35, h: 0.8, fontSize: 34, bold: true, color: t.color, align: "left", valign: "middle" });
-      s.addText(t.label, { x: tx + 0.22, y: tileY + 0.92, w: tileW - 0.4, h: 0.5, fontSize: 12, color: BRAND.ink, align: "left", valign: "top" });
+      s.addText(trunc(t.value, 10), { x: tx + 0.2, y: tileY + 0.12, w: tileW - 0.35, h: 0.8, fontSize: 30, bold: true, color: t.color, align: "left", valign: "middle", fit: "shrink" });
+      s.addText(trunc(t.label, 40), { x: tx + 0.22, y: tileY + 0.92, w: tileW - 0.4, h: 0.5, fontSize: 12, color: BRAND.ink, align: "left", valign: "top", wrap: true, fit: "shrink" });
     });
     const chartY = 3.05, chartH = 3.4;
     const bar = [{ name: "Erreurs / mois", labels: ["M1", "M2", "M3", "M4", "M5", "M6"], values: [42, 30, 20, 12, 6, 3] }];
     s.addChart(pptx.ChartType.bar, bar, { x: 0.5, y: chartY, w: 6.1, h: chartH, barDir: "col", chartColors: [BRAND.orange], showTitle: true, title: "Erreurs de saisie / mois (↓)", titleColor: BRAND.ink, titleFontSize: 13, showValue: false, showLegend: false, catAxisLabelColor: BRAND.grey, valAxisLabelColor: BRAND.grey });
     const dough = [{ name: "Adoption", labels: ["Adopté", "En cours", "À faire"], values: [70, 20, 10] }];
     s.addChart(pptx.ChartType.doughnut, dough, { x: 7.0, y: chartY, w: 5.8, h: chartH, chartColors: [BRAND.orange, "F2A03D", "E5E7EB"], showTitle: true, title: "Adoption par site", titleColor: BRAND.ink, titleFontSize: 13, showLegend: true, legendPos: "b", legendColor: BRAND.grey, holeSize: 60, showValue: true, dataLabelColor: "FFFFFF", dataLabelFontSize: 11 });
-    s.addText("Maquette indicative — indicateurs à définir avec le client", { x: 0.5, y: 6.65, w: PW - 1, h: 0.3, fontSize: 9, italic: true, color: BRAND.grey });
+    s.addText(realKpis ? "Indicateurs issus des critères de succès du projet ; graphiques illustratifs à brancher sur vos données." : "Maquette indicative — indicateurs à définir avec le client", { x: 0.5, y: 6.65, w: PW - 1, h: 0.3, fontSize: 9, italic: true, color: BRAND.grey });
     footer(s);
   };
 
