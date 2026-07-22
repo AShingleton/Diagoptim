@@ -14,6 +14,21 @@ const M_LABEL: Record<string, string> = {
   material: "Matières", measurement: "Mesure", environment: "Milieu",
 };
 
+const TRUE_NORTH_LABEL: Record<string, string> = { human: "Développement humain", quality: "Qualité", delivery: "Ponctualité", cost: "Coût" };
+const VALUE_STREAM_LABEL: Record<string, string> = { demand: "Demand", delivery: "Delivery", development: "Development", support: "Support" };
+const STEEPLE_ROWS: Array<[string, keyof NonNullable<NonNullable<import("@/lib/ai/engine").ScopingSynthesis["strategic"]>["steeple"]>]> = [
+  ["Société", "social"], ["Technologie", "technological"], ["Économie", "economic"],
+  ["Environnement", "environmental"], ["Politique", "political"], ["Légal", "legal"], ["Éthique", "ethical"],
+];
+
+function Pill({ label, on }: { label: string; on: boolean }) {
+  return (
+    <div className={`rounded-lg border px-3 py-2 text-center text-sm ${on ? "border-primary bg-primary text-primary-foreground font-semibold" : "border-border/60 bg-card text-muted-foreground"}`}>
+      {label}
+    </div>
+  );
+}
+
 function Card({ label, children, accent }: { label: string; children: React.ReactNode; accent?: boolean }) {
   return (
     <div className={`rounded-xl border bg-card p-4 ${accent ? "border-primary/40" : "border-border/60"}`}>
@@ -41,6 +56,7 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
   const synth = await getStoredSynthesis(prisma, id);
   if (!project || !synth) notFound();
   const { a3, ishikawa, cahierDesCharges: cdc } = synth;
+  const strat = synth.strategic;
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -50,6 +66,96 @@ export default async function SynthesePage({ params }: { params: Promise<{ local
         <a href={`/${locale}/scoping/${id}/export/pdf`} className="rounded-lg border border-border/60 bg-card px-3 py-1.5 text-sm text-primary hover:border-primary">↓ PDF</a>
         <a href={`/${locale}/scoping/${id}/export/pptx`} className="rounded-lg border border-border/60 bg-card px-3 py-1.5 text-sm text-primary hover:border-primary">↓ PowerPoint</a>
       </div>
+
+      {/* Strategic layer — rendered only when a direction respondent supplied it */}
+      {strat && (
+        <section className="mt-8">
+          <h2 className="text-xl font-bold">Cadrage stratégique</h2>
+
+          {strat.hoshin && (
+            <div className="mt-3 rounded-xl border border-primary/40 bg-card p-4">
+              <div className="text-sm font-semibold text-primary">Alignement stratégique (Hoshin)</div>
+              <div className="mt-2 text-sm">
+                <span className="font-medium text-foreground">Objectif (12-18 mois) :</span>{" "}
+                <span className="text-muted-foreground">{strat.hoshin.objective}</span>
+              </div>
+              {strat.hoshin.trueNorth && (
+                <div className="mt-1 text-sm">
+                  <span className="font-medium text-foreground">Indicateur True North :</span>{" "}
+                  <span className="inline-block rounded-md bg-primary/10 px-2 py-0.5 text-primary">{TRUE_NORTH_LABEL[strat.hoshin.trueNorth] ?? strat.hoshin.trueNorth}</span>
+                </div>
+              )}
+              {strat.hoshin.breakthroughs?.length ? (
+                <div className="mt-2">
+                  <div className="text-sm font-medium text-foreground">Percées prioritaires</div>
+                  <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                    {strat.hoshin.breakthroughs.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              ) : null}
+              {strat.hoshin.alignment && (
+                <p className="mt-2 text-xs italic text-muted-foreground">Lien projet ↔ stratégie : {strat.hoshin.alignment}</p>
+              )}
+            </div>
+          )}
+
+          {strat.steeple && (
+            <div className="mt-3">
+              <h3 className="text-base font-semibold text-foreground">Contexte STEEPLE</h3>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {STEEPLE_ROWS.map(([label, key]) =>
+                  strat.steeple![key] ? (
+                    <div key={key} className="rounded-lg border border-border/60 bg-card p-3 text-sm">
+                      <span className="font-medium text-foreground">{label}</span>
+                      <span className="text-muted-foreground"> — {strat.steeple![key]}</span>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            </div>
+          )}
+
+          {strat.swot && (
+            <div className="mt-4">
+              <h3 className="text-base font-semibold text-foreground">SWOT / TOWS</h3>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                {([
+                  ["Forces", strat.swot.strengths, "border-emerald-500/50"],
+                  ["Faiblesses", strat.swot.weaknesses, "border-orange-500/50"],
+                  ["Opportunités", strat.swot.opportunities, "border-sky-500/50"],
+                  ["Menaces", strat.swot.threats, "border-red-500/50"],
+                ] as Array<[string, string[], string]>).map(([label, arr, border]) => (
+                  <div key={label} className={`rounded-xl border-2 bg-card p-3 ${border}`}>
+                    <div className="text-sm font-semibold text-foreground">{label}</div>
+                    <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                      {(arr?.length ? arr : ["—"]).map((it, i) => <li key={i}>{it}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {strat.sbs && (
+            <div className="mt-4 rounded-xl border border-border/60 bg-card p-4">
+              <h3 className="text-base font-semibold text-foreground">Positionnement SBS</h3>
+              <div className="mt-2 text-xs font-medium uppercase tracking-wide text-primary">True North</div>
+              <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {(["human", "quality", "delivery", "cost"] as const).map((k) => (
+                  <Pill key={k} label={TRUE_NORTH_LABEL[k]} on={k === strat.hoshin?.trueNorth} />
+                ))}
+              </div>
+              <div className="mt-3 text-xs font-medium uppercase tracking-wide text-primary">Chaîne de valeur du projet</div>
+              <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {(["demand", "delivery", "development", "support"] as const).map((k) => (
+                  <Pill key={k} label={VALUE_STREAM_LABEL[k]} on={k === strat.sbs!.valueStream} />
+                ))}
+              </div>
+              {strat.sbs.rationale && <p className="mt-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">Pourquoi :</span> {strat.sbs.rationale}</p>}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* A3 boxes 1-4 as a grid of cards */}
       <h2 className="mt-8 text-xl font-bold">Analyse A3</h2>
