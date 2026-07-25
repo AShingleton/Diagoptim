@@ -2,7 +2,7 @@
  * PATCH /api/roadmap/action/[id]
  * Update action status.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

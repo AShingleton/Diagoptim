@@ -1,7 +1,7 @@
 /**
  * POST /api/rag/ingest/url — Ingest content from a URL
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ingestFromUrl } from "@/lib/rag/ingestion";
 import { z } from "zod";

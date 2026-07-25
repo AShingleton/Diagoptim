@@ -1,7 +1,7 @@
 /**
  * POST /api/rag/search/diagnostic — Contextual search for the diagnostic engine
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getRelevantContext } from "@/lib/rag/search";
 import { z } from "zod";
 

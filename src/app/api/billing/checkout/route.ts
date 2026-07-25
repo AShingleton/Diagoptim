@@ -2,7 +2,7 @@
  * POST /api/billing/checkout
  * Create Stripe checkout session for a subscription.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createCheckoutSession } from '@/lib/billing/stripe';
 

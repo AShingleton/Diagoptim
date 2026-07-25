@@ -2,7 +2,7 @@
  * GET    /api/rag/knowledge-base/[id] — Detail of a knowledge base
  * DELETE /api/rag/knowledge-base/[id] — Delete a knowledge base
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(

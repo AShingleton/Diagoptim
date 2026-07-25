@@ -3,7 +3,7 @@
  * Get complete diagnostic results. Only available when status is "completed".
  * Returns waste scores, SWOT data, insights, and the full results payload.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(

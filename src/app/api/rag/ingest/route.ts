@@ -1,7 +1,7 @@
 /**
  * POST /api/rag/ingest — Ingest a single document (multipart upload or text)
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ingestDocument, ingestText } from "@/lib/rag/ingestion";
 import type { DocumentSourceType } from "@prisma/client";

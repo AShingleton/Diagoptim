@@ -3,7 +3,7 @@
  * Start a new diagnostic for a company. Creates the Diagnostic record
  * and returns the first set of framing questions.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { DiagnosticType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';

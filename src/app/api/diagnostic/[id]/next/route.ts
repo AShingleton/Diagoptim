@@ -3,7 +3,7 @@
  * Get the next question for a diagnostic session.
  * Uses QuestionEngine.getNextQuestion() to determine adaptive next question.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';
 import { canAccessDiagnostic } from '@/lib/diagnostic/access';

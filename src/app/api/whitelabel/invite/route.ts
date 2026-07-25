@@ -2,7 +2,7 @@
  * POST /api/whitelabel/invite
  * Invite a client (consultant only).
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

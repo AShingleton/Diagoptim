@@ -2,7 +2,7 @@
  * GET /api/benchmarks/[sector]
  * Get sector benchmarks.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

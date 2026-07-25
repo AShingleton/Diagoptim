@@ -3,7 +3,7 @@
  * Enable two-factor authentication via Supabase MFA (TOTP).
  * Returns the TOTP URI and QR code for the user to scan.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {

@@ -2,7 +2,7 @@
  * DELETE /api/documents/[id]
  * Delete a document. Removes from both Supabase Storage and the database.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 

@@ -3,7 +3,7 @@
  * Finalize a diagnostic, mark it as completed, and trigger report generation.
  * Computes final waste analysis and stores results.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { analyzeWastes, type DiagnosticAnswerInput } from '@/lib/diagnostic/waste-analyzer';
 

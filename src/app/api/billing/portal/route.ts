@@ -2,7 +2,7 @@
  * POST /api/billing/portal
  * Create Stripe customer portal session.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createPortalSession } from '@/lib/billing/stripe';
 

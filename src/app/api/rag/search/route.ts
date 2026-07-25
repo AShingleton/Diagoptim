@@ -1,7 +1,7 @@
 /**
  * POST /api/rag/search — Search the knowledge base
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { searchKnowledge } from "@/lib/rag/search";
 import { z } from "zod";
 

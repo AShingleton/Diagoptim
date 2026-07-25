@@ -2,7 +2,7 @@
  * GET  /api/company/profile - Get the authenticated user's company profile
  * POST /api/company/profile - Create or update (upsert) the company profile
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

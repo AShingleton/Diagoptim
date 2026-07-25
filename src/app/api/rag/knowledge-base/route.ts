@@ -2,7 +2,7 @@
  * POST /api/rag/knowledge-base — Create a knowledge base
  * GET  /api/rag/knowledge-base — List knowledge bases
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 

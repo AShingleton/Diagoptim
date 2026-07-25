@@ -3,7 +3,7 @@
  * Mark a document's extracted data as validated by the user.
  * Optionally accepts corrected extracted data.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

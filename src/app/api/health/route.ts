@@ -10,7 +10,6 @@ import { prisma } from "@/lib/prisma";
 export async function GET(): Promise<NextResponse> {
   const services: Record<string, boolean> = {
     db: false,
-    redis: true, // default true if not configured
   };
 
   // Check database
@@ -19,19 +18,6 @@ export async function GET(): Promise<NextResponse> {
     services.db = true;
   } catch {
     services.db = false;
-  }
-
-  // Check Redis (only if REDIS_URL is defined)
-  if (process.env.REDIS_URL) {
-    try {
-      const response = await fetch(process.env.REDIS_URL.replace("redis://", "http://"), {
-        method: "GET",
-        signal: AbortSignal.timeout(3000),
-      }).catch(() => null);
-      services.redis = response !== null;
-    } catch {
-      services.redis = false;
-    }
   }
 
   const allHealthy = Object.values(services).every(Boolean);

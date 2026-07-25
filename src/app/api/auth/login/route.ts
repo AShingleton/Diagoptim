@@ -2,7 +2,7 @@
  * POST /api/auth/login
  * Authenticate user via Supabase Auth and return the session.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 

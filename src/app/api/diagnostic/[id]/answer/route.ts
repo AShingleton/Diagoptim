@@ -3,7 +3,7 @@
  * Submit an answer to a diagnostic question.
  * Uses QuestionEngine.submitAnswer() to process, score, and handle branching.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';

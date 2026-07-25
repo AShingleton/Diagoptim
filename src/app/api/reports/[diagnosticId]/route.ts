@@ -5,7 +5,7 @@
  * POST /api/reports/[diagnosticId]
  * Request report generation — creates a ReportJob and returns its ID for polling.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createReportJob } from '@/lib/jobs/processor';

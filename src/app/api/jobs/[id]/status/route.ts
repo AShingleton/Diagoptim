@@ -4,7 +4,7 @@
  * Returns the current status of a job for frontend polling.
  * When COMPLETED, also returns the result data or download URL.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getJobStatus } from "@/lib/jobs/processor";
 
 export async function GET(
