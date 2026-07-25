@@ -14,7 +14,6 @@
 
 import type {
   DocumentType,
-  DocumentMimeType,
   ExtractedData,
 } from "@/types/document";
 import { anonymize } from "@/lib/utils/anonymizer";

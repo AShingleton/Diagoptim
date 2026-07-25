@@ -115,7 +115,7 @@ export async function sendPushNotification(
 
   try {
     // Dynamic import to avoid bundling web-push in client builds
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const webPush = (await import(/* webpackIgnore: true */ "web-push" as string)) as {
       setVapidDetails: (subject: string, publicKey: string, privateKey: string) => void;
       sendNotification: (

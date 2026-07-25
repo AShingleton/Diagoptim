@@ -8,7 +8,7 @@
  * @module integrations/export-mp
  */
 
-import type { ReportData, ReportConfig, ReportLocale } from "@/types/report";
+// Types imported from @/types/report when needed
 
 // ---------------------------------------------------------------------------
 // Types
@@ -174,16 +174,10 @@ async function generateMemoireDocx(sections: MemoireTechniqueSections): Promise<
     Paragraph,
     TextRun,
     HeadingLevel,
-    Table,
-    TableRow,
-    TableCell,
-    WidthType,
     AlignmentType,
     PageBreak,
     Header,
     Footer,
-    ShadingType,
-    TableLayoutType,
   } = await import("docx");
 
   const PRIMARY_COLOR = "2C3E50";
