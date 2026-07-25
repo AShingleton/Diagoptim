@@ -1,23 +1,33 @@
-import posthog from "posthog-js";
+/**
+ * PostHog analytics — 100% conditional on NEXT_PUBLIC_POSTHOG_KEY.
+ *
+ * posthog-js is loaded via dynamic import() only when the key exists.
+ * When it's missing, nothing is imported, no network request fires.
+ */
 
-export const POSTHOG_ENABLED =
-  typeof window !== "undefined" &&
-  !!process.env.NEXT_PUBLIC_POSTHOG_KEY &&
-  process.env.NEXT_PUBLIC_POSTHOG_KEY !== "";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let ph: any = null;
+let initCalled = false;
 
 export function initPostHog(): void {
-  if (!POSTHOG_ENABLED) return;
+  if (initCalled) return;
+  initCalled = true;
 
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
-    person_profiles: "identified_only",
-    capture_pageview: true,
-    capture_pageleave: true,
-    loaded: (ph) => {
-      if (process.env.NODE_ENV === "development") {
-        ph.debug();
-      }
-    },
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  // Skip if no key, placeholder value, or not in browser
+  if (!key || typeof window === "undefined" || key.endsWith("...") || key.length < 10) return;
+
+  // Dynamic import keeps posthog-js out of the initial bundle.
+  // The import only executes when this function is actually called at runtime.
+  import("posthog-js").then((mod) => {
+    const posthog = mod.default;
+    posthog.init(key, {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
+      person_profiles: "identified_only",
+      capture_pageview: true,
+      capture_pageleave: true,
+    });
+    ph = posthog;
   });
 }
 
@@ -32,18 +42,13 @@ export type DiagOptimEvent =
   | "support_pack_purchased";
 
 export function trackEvent(event: DiagOptimEvent, properties?: Record<string, unknown>): void {
-  if (!POSTHOG_ENABLED) return;
-  posthog.capture(event, properties);
+  ph?.capture(event, properties);
 }
 
 export function identifyUser(userId: string, traits?: Record<string, unknown>): void {
-  if (!POSTHOG_ENABLED) return;
-  posthog.identify(userId, traits);
+  ph?.identify(userId, traits);
 }
 
 export function resetUser(): void {
-  if (!POSTHOG_ENABLED) return;
-  posthog.reset();
+  ph?.reset();
 }
-
-export { posthog };
