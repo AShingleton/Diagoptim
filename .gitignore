@@ -52,3 +52,7 @@ prisma/generated/
 # dist
 dist/
 .env*
+
+# Scripts Playwright jetables (captures de QA visuelle) et leurs sorties PNG
+/_*.js
+/*.png
