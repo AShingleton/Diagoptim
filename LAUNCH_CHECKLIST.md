@@ -9,8 +9,8 @@
 - [x] Dev server : toutes routes OK (6/6)
 - [x] .gitignore : configure
 - [x] vercel.json : configure (cdg1, headers securite, 4 crons)
-- [x] Dockerfile : configure (workers Railway)
-- [x] docker-compose.yml : configure (Redis dev)
+- [x] ~~Dockerfile~~ : supprimé (workers Railway remplacés par Vercel cron)
+- [x] ~~docker-compose.yml~~ : supprimé (Redis n'est plus nécessaire)
 - [x] README.md : professionnel cree
 - [x] /api/health : endpoint cree (DB + Redis checks)
 - [x] PostHog : configure (conditionnel si NEXT_PUBLIC_POSTHOG_KEY defini)
@@ -30,8 +30,8 @@
 
 - [ ] Creer un repo GitHub prive et pusher le code
 - [ ] Importer le projet sur Vercel et configurer les env vars
-- [ ] Deployer les workers sur Railway
-- [ ] Configurer Redis sur Upstash
+- [x] ~~Workers Railway~~ : remplacés par Vercel cron (process-jobs)
+- [x] ~~Redis/Upstash~~ : supprimé, jobs traités via Supabase + cron
 - [ ] Configurer le domaine DNS (app.diagoptim.com -> Vercel)
 - [ ] SSL/TLS verifie
 - [ ] Emails SPF/DKIM/DMARC configures
