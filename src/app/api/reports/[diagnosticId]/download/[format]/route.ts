@@ -2,7 +2,7 @@
  * GET /api/reports/[diagnosticId]/download/[format]
  * Download report as PDF or DOCX.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

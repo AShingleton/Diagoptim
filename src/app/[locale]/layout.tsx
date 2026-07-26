@@ -4,7 +4,6 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import "../globals.css";
 import { QueryProvider } from "./QueryProvider";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -51,32 +50,47 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
+  // Dynamically load PostHogProvider only when the key is configured.
+  // This keeps posthog-js completely out of the client bundle otherwise.
+  let MaybePostHogProvider: React.ComponentType<{ children: React.ReactNode }> | null = null;
+  const phKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  if (phKey && !phKey.endsWith("...") && phKey.length >= 10) {
+    const mod = await import("@/components/providers/PostHogProvider");
+    MaybePostHogProvider = mod.PostHogProvider;
+  }
+
+  const appContent = (
+    <QueryProvider>
+      {children}
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          duration: 4000,
+        }}
+      />
+    </QueryProvider>
+  );
+
   return (
     <html
       lang={locale}
       className={`${dmSans.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <PostHogProvider>
-          <QueryProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              toastOptions={{
-                duration: 4000,
-              }}
-            />
-          </QueryProvider>
-          </PostHogProvider>
+          {MaybePostHogProvider ? (
+            <MaybePostHogProvider>{appContent}</MaybePostHogProvider>
+          ) : (
+            appContent
+          )}
         </ThemeProvider>
       </body>
     </html>

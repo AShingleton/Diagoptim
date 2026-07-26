@@ -4,7 +4,7 @@
  * Saves the file to Supabase Storage and creates a Document record
  * queued for analysis.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 

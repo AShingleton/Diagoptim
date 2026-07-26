@@ -211,7 +211,7 @@ async function checkStripePrices(): Promise<void> {
 
     // Also check config/stripe-prices.json if it exists
     const configPath = path.resolve(__dirname, '..', 'config', 'stripe-prices.json');
-    let priceEntries: { label: string; priceId: string }[] = [];
+    const priceEntries: { label: string; priceId: string }[] = [];
 
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));

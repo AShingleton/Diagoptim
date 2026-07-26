@@ -2,7 +2,7 @@
  * GET /api/roadmap/[id]/gantt
  * Get Gantt chart data for a roadmap.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

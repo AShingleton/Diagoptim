@@ -3,7 +3,7 @@
  * Lookup a company by SIRET number via the INSEE SIRENE API.
  * Returns structured company data from the French business registry.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { searchBySiret } from '@/lib/integrations/sirene';
 
 export async function GET(

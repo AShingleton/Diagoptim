@@ -66,7 +66,7 @@ const DEFAULT_BRANDING: BrandingTheme = {
 };
 
 // ---------------------------------------------------------------------------
-// In-memory cache (replace with Redis or similar in production)
+// In-memory cache (sufficient for Vercel serverless — scoped to instance lifetime)
 // ---------------------------------------------------------------------------
 
 interface CacheEntry {

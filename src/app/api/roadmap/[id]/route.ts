@@ -2,7 +2,7 @@
  * GET /api/roadmap/[id]
  * Get roadmap with all actions.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

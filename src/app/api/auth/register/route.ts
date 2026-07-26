@@ -3,7 +3,7 @@
  * Register a new user via Supabase Auth, then create a User record
  * and a free Subscription in the database.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';

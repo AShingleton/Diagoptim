@@ -2,7 +2,7 @@
  * POST /api/billing/webhook
  * Stripe webhook handler. No auth required - verified by Stripe signature.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleWebhook } from '@/lib/billing/stripe';
 // Plan and SubscriptionStatus are Prisma enums defined in schema.prisma.

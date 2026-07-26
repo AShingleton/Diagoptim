@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { initPostHog, POSTHOG_ENABLED } from "@/lib/analytics/posthog";
 
 /**
  * PostHog analytics provider.
- * Only initializes if NEXT_PUBLIC_POSTHOG_KEY is set.
- * Include this component once in the root layout.
+ * Only loads posthog-js when NEXT_PUBLIC_POSTHOG_KEY is set.
+ * When the key is missing, this is a zero-cost passthrough — no imports, no fetches.
  */
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    initPostHog();
-  }, []);
+    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    if (!key || key.endsWith("...") || key.length < 10) return;
 
-  if (!POSTHOG_ENABLED) {
-    return <>{children}</>;
-  }
+    // Only import the analytics module (which itself dynamically imports posthog-js)
+    // when we actually have a key configured.
+    import("@/lib/analytics/posthog").then((mod) => {
+      mod.initPostHog();
+    });
+  }, []);
 
   return <>{children}</>;
 }

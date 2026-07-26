@@ -1,7 +1,7 @@
 /**
  * POST /api/rag/ingest/batch — Ingest multiple documents
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ingestText } from "@/lib/rag/ingestion";
 import { z } from "zod";

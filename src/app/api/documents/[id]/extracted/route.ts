@@ -2,7 +2,7 @@
  * GET /api/documents/[id]/extracted
  * Get the extracted data for a document after OCR/AI processing.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(

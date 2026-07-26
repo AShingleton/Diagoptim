@@ -2,7 +2,7 @@
  * GET /api/training/memory-sheet/[id]/download
  * Download memory sheet as PDF.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

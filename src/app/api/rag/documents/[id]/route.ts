@@ -2,7 +2,7 @@
  * GET    /api/rag/documents/[id] — Document detail with chunks
  * DELETE /api/rag/documents/[id] — Delete document and its embeddings
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(

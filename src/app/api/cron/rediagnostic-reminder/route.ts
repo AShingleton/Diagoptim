@@ -11,7 +11,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let sentCount = 0;
+  const sentCount = 0;
 
   try {
     // const ninetyDaysAgo = subDays(new Date(), 90);

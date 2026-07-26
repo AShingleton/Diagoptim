@@ -2,7 +2,7 @@
  * POST /api/roadmap/generate
  * Generate a roadmap from diagnostic results.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 

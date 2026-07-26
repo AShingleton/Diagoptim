@@ -2,7 +2,7 @@
  * GET /api/diagnostic/[id]/progress
  * Get diagnostic progress including phase breakdown and partial insights.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { QuestionEngine } from '@/lib/diagnostic/question-engine';
 

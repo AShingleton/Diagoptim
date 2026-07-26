@@ -62,7 +62,6 @@ npm run dev
 | `BREVO_API_KEY` | Clé API Brevo (emails) | ✅ |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Clé PostHog (analytics) | ❌ |
 | `NEXT_PUBLIC_POSTHOG_HOST` | Host PostHog | ❌ |
-| `REDIS_URL` | URL Redis (workers) | ❌ |
 | `ENCRYPTION_KEY` | Clé chiffrement documents (AES-256) | ✅ |
 
 ## Commandes disponibles
@@ -128,13 +127,9 @@ src/
 4. Configurer toutes les variables d'environnement
 5. Déployer
 
-### Railway (Workers background)
+### Background Jobs
 
-1. Créer un nouveau projet sur [Railway](https://railway.app)
-2. Connecter le repository GitHub
-3. Utiliser le `Dockerfile` à la racine
-4. Configurer les variables d'environnement (DATABASE_URL, REDIS_URL, etc.)
-5. Déployer
+Background processing (document analysis, report generation) runs via Vercel Cron jobs — no separate worker infrastructure needed. Jobs are queued in the database and processed every minute by `/api/cron/process-jobs`.
 
 ## Licence
 

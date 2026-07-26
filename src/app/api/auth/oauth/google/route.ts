@@ -3,7 +3,7 @@
  * Initiate Google OAuth flow via Supabase Auth.
  * Returns the OAuth URL to redirect the user to.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 function getSupabase() {

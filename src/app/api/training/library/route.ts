@@ -2,7 +2,7 @@
  * GET /api/training/library
  * Get training library with optional filters.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 
